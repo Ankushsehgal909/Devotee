@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types';
 import { HomeScreen } from '../screens/home/HomeScreen';
@@ -9,7 +9,7 @@ import { StoreHomeScreen } from '../screens/store/StoreHomeScreen';
 import { DevoteeDashboardScreen } from '../screens/account/DevoteeDashboardScreen';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
-import { Home, Flame, Sparkles, ShoppingBag, User } from 'lucide-react-native';
+import { Icon } from '../components/common/Icon';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -30,7 +30,9 @@ export const MainTabNavigator: React.FC = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Darshan',
-          tabBarIcon: ({ color, size }) => <Home size={size || 22} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon family="material" name="home" size={size || 24} color={color} />
+          ),
         }}
       />
 
@@ -39,7 +41,9 @@ export const MainTabNavigator: React.FC = () => {
         component={PujaNavigator}
         options={{
           tabBarLabel: 'Pujas',
-          tabBarIcon: ({ color, size }) => <Flame size={size || 22} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon family="material-community" name="fire" size={size || 24} color={color} />
+          ),
         }}
       />
 
@@ -49,9 +53,9 @@ export const MainTabNavigator: React.FC = () => {
         component={JapamMalaScreen}
         options={{
           tabBarLabel: 'Japam',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: () => (
             <View style={styles.centralTabAction}>
-              <Sparkles size={24} color="#FFFFFF" />
+              <Icon family="material-community" name="om" size={26} color="#FFFFFF" />
             </View>
           ),
           tabBarLabelStyle: styles.centralLabel,
@@ -63,7 +67,9 @@ export const MainTabNavigator: React.FC = () => {
         component={StoreHomeScreen}
         options={{
           tabBarLabel: 'Samagri',
-          tabBarIcon: ({ color, size }) => <ShoppingBag size={size || 22} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon family="material-community" name="shopping-outline" size={size || 24} color={color} />
+          ),
         }}
       />
 
@@ -72,7 +78,9 @@ export const MainTabNavigator: React.FC = () => {
         component={DevoteeDashboardScreen}
         options={{
           tabBarLabel: 'Devotee',
-          tabBarIcon: ({ color, size }) => <User size={size || 22} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon family="material" name="person" size={size || 24} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>

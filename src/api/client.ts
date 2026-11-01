@@ -1,90 +1,123 @@
 import { ENV } from '../config/env';
 import { useAuthStore } from '../store/useAuthStore';
 
-export class ApiError extends Error {
-  status: number;
-  data: any;
+export interface ApiResponseEnvelope<T> {
+  success: boolean;
+  data: T;
+  timestamp?: string;
+  meta?: {
+    total?: number;
+    page?: number;
+    limit?: number;
+  };
+}
 
-  constructor(message: string, status: number, data?: any) {
+export class ApiError extends Error {
+  constructor(
+    readonly statusCode: number,
+    message: string,
+    readonly errors?: string[],
+    readonly code?: string,
+    readonly details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'ApiError';
-    this.status = status;
-    this.data = data;
   }
 }
 
-interface RequestOptions extends RequestInit {
-  params?: Record<string, string | number | boolean | undefined>;
+export interface RequestOptions extends Omit<RequestInit, 'body'> {
+  body?: unknown;
+  query?: Record<string, string | number | boolean | undefined | null>;
 }
 
-export async function apiClient<T>(
-  endpoint: string,
-  options: RequestOptions = {}
-): Promise<T> {
+function buildUrl(path: string, query?: RequestOptions['query']): string {
+  const base = ENV.API_BASE_URL.replace(/\/+$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const url = new URL(`${base}${cleanPath}`);
+
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    }
+  }
+
+  return url.toString();
+}
+
+/**
+ * Single entry point for talking to the NestJS API.
+ * Unwraps the `ApiResponse` envelope so callers get plain data, and turns failures into `ApiError`.
+ * Modeled directly from VedSarthi apps/web/src/lib/api-client.ts.
+ */
+export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { body, query, headers, ...rest } = options;
   const token = useAuthStore.getState().token;
 
-  let url = `${ENV.API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-
-  if (options.params) {
-    const searchParams = new URLSearchParams();
-    Object.entries(options.params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        searchParams.append(key, String(value));
-      }
-    });
-    const queryString = searchParams.toString();
-    if (queryString) {
-      url += `?${queryString}`;
-    }
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set('Accept', 'application/json');
+  if (body !== undefined && !(body instanceof FormData)) {
+    requestHeaders.set('Content-Type', 'application/json');
   }
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-    ...(options.headers as Record<string, string>),
-  };
 
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    requestHeaders.set('Authorization', `Bearer ${token}`);
   }
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+  const url = buildUrl(path, query);
+  const response = await fetch(url, {
+    ...rest,
+    headers: requestHeaders,
+    body: body !== undefined ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
+  });
 
-    if (!response.ok) {
-      let errorBody: any;
-      try {
-        errorBody = await response.json();
-      } catch {
-        errorBody = { message: response.statusText };
-      }
+  if (response.status === 204) {
+    return undefined as unknown as T;
+  }
 
-      if (response.status === 401) {
-        useAuthStore.getState().logout();
-      }
+  const payload: any = await response.json().catch(() => null);
 
-      throw new ApiError(
-        errorBody?.message || `Request failed with status ${response.status}`,
-        response.status,
-        errorBody
-      );
+  if (!response.ok) {
+    if (response.status === 401) {
+      useAuthStore.getState().logout();
     }
+    const message =
+      payload?.errors?.length
+        ? payload.errors.join(', ')
+        : Array.isArray(payload?.message)
+        ? payload.message.join(', ')
+        : payload?.message || response.statusText || 'Request failed';
 
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return (await response.json()) as T;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
     throw new ApiError(
-      error instanceof Error ? error.message : 'Network request failed',
-      0
+      payload?.statusCode ?? response.status,
+      message,
+      payload?.errors,
+      payload?.code,
+      payload?.details
     );
   }
+
+  // Unpack ApiResponse envelope if present, else return raw payload
+  return payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
+}
+
+/** Same as `apiFetch`, but handles list responses */
+export async function apiFetchList<T>(
+  path: string,
+  options: RequestOptions = {}
+): Promise<T[]> {
+  const data = await apiFetch<T[] | { items: T[] } | { data: T[] }>(path, options);
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (data && typeof data === 'object') {
+    if ('items' in data && Array.isArray((data as any).items)) {
+      return (data as any).items;
+    }
+    if ('data' in data && Array.isArray((data as any).data)) {
+      return (data as any).data;
+    }
+  }
+  return [];
 }

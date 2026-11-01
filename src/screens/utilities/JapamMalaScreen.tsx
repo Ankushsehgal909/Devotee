@@ -13,9 +13,9 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Card } from '../../components/common/Card';
 import { Header } from '../../components/common/Header';
+import { Icon } from '../../components/common/Icon';
 import { useMalaStore } from '../../store/useMalaStore';
 import { DEFAULT_MANTRAS } from '../../constants/vedic';
-import { RotateCcw, Volume2, VolumeX, Sparkles } from 'lucide-react-native';
 
 export const JapamMalaScreen: React.FC = () => {
   const {
@@ -44,7 +44,7 @@ export const JapamMalaScreen: React.FC = () => {
     if (res.isMalaCompleted) {
       Alert.alert(
         'Mala Complete',
-        `Har Har Mahadev! You have completed Round ${res.round} (108 Chants)! May the Divine bless you.`
+        `You have completed Round ${res.round} (108 Chants). May the Divine bless you.`
       );
     }
   };
@@ -56,11 +56,12 @@ export const JapamMalaScreen: React.FC = () => {
         showBack={false}
         rightAction={
           <TouchableOpacity onPress={toggleSound} style={styles.iconBtn}>
-            {soundEnabled ? (
-              <Volume2 size={20} color={colors.textPrimary} />
-            ) : (
-              <VolumeX size={20} color={colors.textMuted} />
-            )}
+            <Icon
+              family="material-community"
+              name={soundEnabled ? 'volume-high' : 'volume-off'}
+              size={22}
+              color={soundEnabled ? colors.textPrimary : colors.textMuted}
+            />
           </TouchableOpacity>
         }
       />
@@ -96,7 +97,7 @@ export const JapamMalaScreen: React.FC = () => {
         {/* Sacred Sanskrit Mantra Card */}
         <Card variant="warm" style={styles.mantraCard}>
           <View style={styles.deityRow}>
-            <Sparkles size={16} color={colors.goldAccent} />
+            <Icon family="material-community" name="star-four-points" size={16} color={colors.goldAccent} />
             <Text style={styles.deityName}>{activeMantra.deity}</Text>
           </View>
           <Text style={styles.sanskritText}>{activeMantra.sanskrit}</Text>
@@ -135,7 +136,7 @@ export const JapamMalaScreen: React.FC = () => {
 
         {/* Reset Current Round Button */}
         <TouchableOpacity onPress={resetCurrentRound} style={styles.resetBtn}>
-          <RotateCcw size={16} color={colors.textMuted} />
+          <Icon family="material-community" name="refresh" size={16} color={colors.textMuted} />
           <Text style={styles.resetText}>Reset Current Mala</Text>
         </TouchableOpacity>
       </ScrollView>

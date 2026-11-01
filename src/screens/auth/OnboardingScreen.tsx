@@ -7,25 +7,25 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Button } from '../../components/common/Button';
-import { Sparkles, ShieldCheck, HeartHandshake, ChevronRight } from 'lucide-react-native';
+import { Icon } from '../../components/common/Icon';
 
 type OnboardingProp = NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>;
 
 const SLIDES = [
   {
-    icon: ShieldCheck,
+    iconName: 'shield-check',
     title: 'Certified Gurukul Purohits',
     desc: 'Experienced, verified Acharyas from ancient Vedic traditions for authentic ritual conduct at your doorstep or online.',
   },
   {
-    icon: Sparkles,
+    iconName: 'star-four-points',
     title: 'Customized Gotra Sankalp',
-    desc: 'Seamless family tree integration that recites household Gotras, Nakshatras & Rashis for sacred divine blessings.',
+    desc: 'Seamless family tree integration that recites household Gotras, Nakshatras and Rashis for sacred divine blessings.',
   },
   {
-    icon: HeartHandshake,
+    iconName: 'hand-heart',
     title: '100% Consecrated Samagri',
-    desc: 'Purity-certified A2 Gir Cow Ghee, lab-tested Hawan herbs, pure copper/brass items delivered to your altar.',
+    desc: 'Purity-certified A2 Gir Cow Ghee, lab-tested Hawan herbs, pure copper and brass items delivered to your altar.',
   },
 ];
 
@@ -41,7 +41,7 @@ export const OnboardingScreen: React.FC = () => {
     }
   };
 
-  const IconComponent = SLIDES[currentSlide].icon;
+  const slide = SLIDES[currentSlide];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,11 +56,16 @@ export const OnboardingScreen: React.FC = () => {
 
       <View style={styles.content}>
         <View style={styles.iconCircle}>
-          <IconComponent size={44} color={colors.primary} />
+          <Icon
+            family="material-community"
+            name={slide.iconName}
+            size={44}
+            color={colors.primary}
+          />
         </View>
 
-        <Text style={styles.title}>{SLIDES[currentSlide].title}</Text>
-        <Text style={styles.desc}>{SLIDES[currentSlide].desc}</Text>
+        <Text style={styles.title}>{slide.title}</Text>
+        <Text style={styles.desc}>{slide.desc}</Text>
 
         <View style={styles.dotsRow}>
           {SLIDES.map((_, i) => (
@@ -79,7 +84,7 @@ export const OnboardingScreen: React.FC = () => {
         <Button
           title={currentSlide === SLIDES.length - 1 ? 'Begin Spiritual Journey' : 'Continue'}
           onPress={handleNext}
-          rightIcon={<ChevronRight size={18} color="#FFFFFF" />}
+          rightIcon={<Icon family="material" name="chevron-right" size={20} color="#FFFFFF" />}
           size="lg"
         />
       </View>

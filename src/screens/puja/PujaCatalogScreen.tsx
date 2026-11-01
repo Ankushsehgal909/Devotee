@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
@@ -14,20 +15,20 @@ import { typography } from '../../theme/typography';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Header } from '../../components/common/Header';
-import { MOCK_SERVICES } from '../../api/mockData';
+import { Icon } from '../../components/common/Icon';
+import { useServices } from '../../api/services';
 import { PujaService } from '../../types';
-import { Clock, Star, Flame, ChevronRight } from 'lucide-react-native';
 
-const CATEGORIES = ['All', 'Prosperity & Vrat', 'Health & Dosha Nivaran', 'Vastu & Sanskar'];
+const CATEGORIES = ['All', 'Prosperity and Vrat', 'Health and Long Life', 'Vastu and Shanti', 'Navagraha'];
 
 export const PujaCatalogScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const [activeCategory, setActiveCategory] = useState('All');
 
-  const filteredServices =
-    activeCategory === 'All'
-      ? MOCK_SERVICES
-      : MOCK_SERVICES.filter((s) => s.category === activeCategory);
+  // Real API hook
+  const { data: services, isLoading, refetch } = useServices({
+    category: activeCategory === 'All' ? undefined : activeCategory,
+  });
 
   const renderServiceItem = ({ item }: { item: PujaService }) => (
     <Card
@@ -36,24 +37,24 @@ export const PujaCatalogScreen: React.FC = () => {
     >
       <View style={styles.cardTop}>
         <View style={styles.flameIcon}>
-          <Flame size={20} color={colors.primary} />
+          <Icon family="material-community" name="fire" size={20} color={colors.primary} />
         </View>
         <View style={styles.cardHeaderInfo}>
           <Text style={styles.serviceTitle}>{item.title}</Text>
           <View style={styles.ratingRow}>
-            <Star size={12} color={colors.goldAccent} fill={colors.goldAccent} />
-            <Text style={styles.ratingText}>{item.rating}</Text>
-            <Text style={styles.reviewText}>({item.reviewCount} reviews)</Text>
+            <Icon family="material" name="star" size={14} color={colors.goldAccent} />
+            <Text style={styles.ratingText}>{item.rating || 4.9}</Text>
+            <Text style={styles.reviewText}>({item.reviewCount || 108} reviews)</Text>
           </View>
         </View>
       </View>
 
       <Text style={styles.serviceSubtitle} numberOfLines={2}>
-        {item.subtitle}
+        {item.subtitle || item.description}
       </Text>
 
       <View style={styles.modeTagsRow}>
-        {item.availableModes.map((mode) => (
+        {(item.availableModes || ['home_visit', 'online']).map((mode) => (
           <Badge
             key={mode}
             label={mode === 'home_visit' ? 'Doorstep Visit' : mode === 'online' ? 'Live Online' : 'Temple'}
@@ -66,14 +67,14 @@ export const PujaCatalogScreen: React.FC = () => {
       <View style={styles.cardFooter}>
         <View>
           <Text style={styles.priceLabel}>Ritual Dakshina</Text>
-          <Text style={styles.priceValue}>₹{item.priceMinor / 100}</Text>
+          <Text style={styles.priceValue}>₹{item.priceMinor ? item.priceMinor / 100 : 3500}</Text>
         </View>
         <TouchableOpacity
           style={styles.bookBtn}
           onPress={() => navigation.navigate('PujaDetail', { serviceId: item.id })}
         >
           <Text style={styles.bookBtnText}>Select Vidhi</Text>
-          <ChevronRight size={14} color="#FFFFFF" />
+          <Icon family="material" name="chevron-right" size={16} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </Card>
@@ -112,13 +113,31 @@ export const PujaCatalogScreen: React.FC = () => {
         />
       </View>
 
-      <FlatList
-        data={filteredServices}
-        keyExtractor={(item) => item.id}
-        renderItem={renderServiceItem}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <View style={styles.loadingArea}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading Vedic Pujas...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={services || []}
+          keyExtractor={(item) => item.id}
+          renderItem={renderServiceItem}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          onRefresh={refetch}
+          refreshing={isLoading}
+          ListEmptyComponent={
+            <Card style={styles.emptyCard}>
+              <Icon family="material-community" name="fire" size={36} color={colors.textMuted} />
+              <Text style={styles.emptyTitle}>No Rituals Found</Text>
+              <Text style={styles.emptySubtext}>
+                No rituals currently listed in this category. Pull down to refresh.
+              </Text>
+            </Card>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -165,6 +184,16 @@ const styles = StyleSheet.create({
   listContent: {
     padding: spacing.screenPadding,
     paddingBottom: spacing.xxxl,
+  },
+  loadingArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
   },
   card: {
     marginBottom: spacing.md,
@@ -251,5 +280,21 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  emptyCard: {
+    alignItems: 'center',
+    padding: spacing.xl,
+    marginTop: spacing.xl,
+  },
+  emptyTitle: {
+    ...typography.h4,
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
+  },
+  emptySubtext: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
   },
 });

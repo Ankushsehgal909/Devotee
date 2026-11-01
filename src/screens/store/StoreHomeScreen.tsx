@@ -6,24 +6,26 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Header } from '../../components/common/Header';
-import { MOCK_PRODUCTS } from '../../api/mockData';
+import { Icon } from '../../components/common/Icon';
+import { useCatalog } from '../../api/shop';
 import { Product } from '../../types';
 import { useCartStore } from '../../store/useCartStore';
-import { ShoppingBag, Star, ShieldCheck, Plus } from 'lucide-react-native';
 
 export const StoreHomeScreen: React.FC = () => {
-  const navigation = useNavigation<any>();
   const { addItem, getTotalCount } = useCartStore();
   const cartItemCount = getTotalCount();
+
+  // Real API hook
+  const { data: products, isLoading, refetch } = useCatalog();
 
   const renderProduct = ({ item }: { item: Product }) => (
     <Card style={styles.productCard}>
@@ -31,22 +33,22 @@ export const StoreHomeScreen: React.FC = () => {
         <Badge
           label="100% Pure"
           variant="sacred"
-          icon={<ShieldCheck size={12} color={colors.primary} />}
+          icon={<Icon family="material-community" name="shield-check" size={12} color={colors.primary} />}
         />
         <View style={styles.ratingRow}>
-          <Star size={12} color={colors.goldAccent} fill={colors.goldAccent} />
-          <Text style={styles.ratingText}>{item.rating}</Text>
+          <Icon family="material" name="star" size={14} color={colors.goldAccent} />
+          <Text style={styles.ratingText}>{item.rating || 5.0}</Text>
         </View>
       </View>
 
       <Text style={styles.productTitle}>{item.title}</Text>
       <Text style={styles.productDesc} numberOfLines={2}>
-        {item.shortDescription}
+        {item.shortDescription || item.description}
       </Text>
 
       <View style={styles.productFooter}>
         <View>
-          <Text style={styles.priceVal}>₹{item.priceMinor / 100}</Text>
+          <Text style={styles.priceVal}>₹{item.priceMinor ? item.priceMinor / 100 : 499}</Text>
           {item.compareAtPriceMinor && (
             <Text style={styles.strikePrice}>₹{item.compareAtPriceMinor / 100}</Text>
           )}
@@ -55,10 +57,10 @@ export const StoreHomeScreen: React.FC = () => {
           style={styles.addBtn}
           onPress={() => {
             addItem(item, 1);
-            Alert.alert('Sacred Basket', `Added ${item.title} to your Sacred Basket!`);
+            Alert.alert('Sacred Basket', `Added ${item.title} to your Sacred Basket.`);
           }}
         >
-          <Plus size={16} color="#FFFFFF" />
+          <Icon family="material" name="add" size={16} color="#FFFFFF" />
           <Text style={styles.addBtnText}>Add</Text>
         </TouchableOpacity>
       </View>
@@ -72,7 +74,7 @@ export const StoreHomeScreen: React.FC = () => {
         showBack={false}
         rightAction={
           <TouchableOpacity style={styles.cartBtn} onPress={() => {}}>
-            <ShoppingBag size={22} color={colors.primary} />
+            <Icon family="material-community" name="shopping-outline" size={24} color={colors.primary} />
             {cartItemCount > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
@@ -82,20 +84,38 @@ export const StoreHomeScreen: React.FC = () => {
         }
       />
 
-      <FlatList
-        data={MOCK_PRODUCTS}
-        keyExtractor={(item) => item.id}
-        renderItem={renderProduct}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
-          <Card variant="warm" style={styles.storeBanner}>
-            <Text style={styles.bannerTitle}>100% Certified Vedic Purity</Text>
-            <Text style={styles.bannerSubtitle}>
-              Hand-churned A2 Gir Cow Bilona Ghee, lab-tested natural herbs, and consecrated brass vigrahas. Free delivery over ₹499.
-            </Text>
-          </Card>
-        }
-      />
+      {isLoading ? (
+        <View style={styles.centerLoading}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading Consecrated Items...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={products || []}
+          keyExtractor={(item) => item.id}
+          renderItem={renderProduct}
+          contentContainerStyle={styles.listContent}
+          onRefresh={refetch}
+          refreshing={isLoading}
+          ListHeaderComponent={
+            <Card variant="warm" style={styles.storeBanner}>
+              <Text style={styles.bannerTitle}>100% Certified Vedic Purity</Text>
+              <Text style={styles.bannerSubtitle}>
+                Hand-churned A2 Gir Cow Bilona Ghee, lab-tested natural herbs, and consecrated brass vigrahas. Free delivery over ₹499.
+              </Text>
+            </Card>
+          }
+          ListEmptyComponent={
+            <Card style={styles.emptyCard}>
+              <Icon family="material-community" name="package-variant" size={36} color={colors.textMuted} />
+              <Text style={styles.emptyTitle}>No Products Found</Text>
+              <Text style={styles.emptySubtext}>
+                Our consecrated store inventory is being updated. Pull down to refresh.
+              </Text>
+            </Card>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -104,6 +124,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgSand,
+  },
+  centerLoading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginTop: 8,
   },
   cartBtn: {
     padding: spacing.xs,
@@ -204,5 +234,21 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  emptyCard: {
+    alignItems: 'center',
+    padding: spacing.xl,
+    marginTop: spacing.xl,
+  },
+  emptyTitle: {
+    ...typography.h4,
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
+  },
+  emptySubtext: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
   },
 });

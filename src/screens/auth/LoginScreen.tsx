@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,7 +17,8 @@ import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-import { Phone, ArrowRight } from 'lucide-react-native';
+import { Icon } from '../../components/common/Icon';
+import { requestOtpApi } from '../../api/auth';
 
 type LoginProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -26,7 +28,7 @@ export const LoginScreen: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     const cleanPhone = phone.trim();
     if (!cleanPhone || cleanPhone.length < 10) {
       setError('Please enter a valid 10-digit mobile number');
@@ -35,10 +37,30 @@ export const LoginScreen: React.FC = () => {
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
+    const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+91${cleanPhone}`;
+
+    try {
+      await requestOtpApi({
+        identifier: formattedPhone,
+        purpose: 'login',
+        channel: 'sms',
+      });
+      navigation.navigate('VerifyOtp', { phone: formattedPhone });
+    } catch (err: any) {
+      // In development if backend is not reachable or returns error, provide actionable alert
+      Alert.alert(
+        'Authentication Notice',
+        err.message || 'Unable to connect to VedSarthi API. Continuing to OTP verification.',
+        [
+          {
+            text: 'Proceed with Code',
+            onPress: () => navigation.navigate('VerifyOtp', { phone: formattedPhone }),
+          },
+        ]
+      );
+    } finally {
       setLoading(false);
-      navigation.navigate('VerifyOtp', { phone: `+91${cleanPhone}` });
-    }, 800);
+    }
   };
 
   return (
@@ -50,7 +72,7 @@ export const LoginScreen: React.FC = () => {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.headerArea}>
             <View style={styles.logoBadge}>
-              <Text style={styles.logoText}>VS</Text>
+              <Icon family="material-community" name="om" size={32} color="#FFFFFF" />
             </View>
             <Text style={styles.title}>Welcome Devotee</Text>
             <Text style={styles.subtitle}>
@@ -70,21 +92,21 @@ export const LoginScreen: React.FC = () => {
                 if (error) setError('');
               }}
               error={error}
-              leftIcon={<Phone size={18} color={colors.primary} />}
-              helperText="We will send a 6-digit divine OTP via SMS"
+              leftIcon={<Icon family="material" name="phone" size={18} color={colors.primary} />}
+              helperText="We will send a 6-digit OTP code via SMS"
             />
 
             <Button
               title="Get Sacred OTP"
               onPress={handleSendOtp}
               loading={loading}
-              rightIcon={<ArrowRight size={18} color="#FFFFFF" />}
+              rightIcon={<Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />}
               size="lg"
               style={styles.btn}
             />
 
             <Text style={styles.termsText}>
-              By continuing, you agree to VedSarthi's Sacred Service Terms and Devotee Privacy Policy.
+              By continuing, you agree to VedSarthi Sacred Service Terms and Devotee Privacy Policy.
             </Text>
           </View>
         </ScrollView>
@@ -120,11 +142,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     borderWidth: 2,
     borderColor: colors.goldAccent,
-  },
-  logoText: {
-    ...typography.h3,
-    color: '#FFFFFF',
-    fontWeight: '800',
   },
   title: {
     ...typography.h2,

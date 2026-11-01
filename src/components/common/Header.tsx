@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft } from 'lucide-react-native';
+import { Icon } from './Icon';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <ArrowLeft size={22} color={colors.textPrimary} />
+            <Icon family="material" name="arrow-back" size={22} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
         <View style={styles.titleContainer}>

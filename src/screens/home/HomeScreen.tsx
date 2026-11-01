@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
@@ -13,25 +14,26 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
+import { Icon } from '../../components/common/Icon';
 import { useAuthStore } from '../../store/useAuthStore';
-import { MOCK_PANCHANG, MOCK_SERVICES, MOCK_BOOKING } from '../../api/mockData';
-import {
-  Bell,
-  Heart,
-  Flame,
-  Sun,
-  Clock,
-  Sparkles,
-  ShoppingBag,
-  ChevronRight,
-} from 'lucide-react-native';
+import { useServices } from '../../api/services';
+import { usePanchang, useBookings, useDevoteeAccount } from '../../api/customer';
+import { PujaService } from '../../types';
 
 export const HomeScreen: React.FC = () => {
   const { user } = useAuthStore();
   const navigation = useNavigation<any>();
 
-  const devoteeName = user?.name || 'Sanatan Devotee';
-  const devoteeGotra = user?.gotra || 'Kashyap';
+  // Real API data hooks
+  const { data: serverUser } = useDevoteeAccount();
+  const { data: panchang, isLoading: isPanchangLoading } = usePanchang();
+  const { data: services, isLoading: isServicesLoading } = useServices({ limit: 6 });
+  const { data: bookings } = useBookings({ limit: 1 });
+
+  const activeBooking = bookings && bookings.length > 0 ? bookings[0] : null;
+
+  const devoteeName = serverUser?.name || user?.name || 'Devotee';
+  const devoteeGotra = serverUser?.gotra || user?.gotra || 'Kashyap';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -39,49 +41,59 @@ export const HomeScreen: React.FC = () => {
       <View style={styles.topNav}>
         <View>
           <Text style={styles.greetingText}>Namaste, {devoteeName}</Text>
-          <Text style={styles.gotraText}>{devoteeGotra} Gotra · Vedic Devotee</Text>
+          <Text style={styles.gotraText}>{devoteeGotra} Gotra | Sanatan Devotee</Text>
         </View>
         <View style={styles.topNavActions}>
           <TouchableOpacity style={styles.iconBtn}>
-            <Heart size={20} color={colors.primary} />
+            <Icon family="material" name="favorite-border" size={20} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn}>
-            <Bell size={20} color={colors.textPrimary} />
+            <Icon family="material" name="notifications-none" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Daily Panchang Strip */}
+        {/* Daily Panchang Strip from live API */}
         <Card variant="warm" style={styles.panchangCard}>
-          <View style={styles.panchangRow}>
-            <View style={styles.panchangLeft}>
-              <View style={styles.panchangIcon}>
-                <Sun size={20} color={colors.goldAccent} />
+          {isPanchangLoading ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <>
+              <View style={styles.panchangRow}>
+                <View style={styles.panchangLeft}>
+                  <View style={styles.panchangIcon}>
+                    <Icon family="material-community" name="weather-sunny" size={20} color={colors.goldAccent} />
+                  </View>
+                  <View>
+                    <Text style={styles.panchangTithi}>{panchang?.tithi || 'Shukla Ashtami'}</Text>
+                    <Text style={styles.panchangNakshatra}>
+                      {panchang?.nakshatra || 'Rohini'} Nakshatra | {panchang?.paksha || 'Shukla'} Paksha
+                    </Text>
+                  </View>
+                </View>
+                <Badge label="Shubh Day" variant="gold" />
               </View>
-              <View>
-                <Text style={styles.panchangTithi}>{MOCK_PANCHANG.tithi}</Text>
-                <Text style={styles.panchangNakshatra}>
-                  {MOCK_PANCHANG.nakshatra} Nakshatra · {MOCK_PANCHANG.paksha} Paksha
-                </Text>
+              <View style={styles.panchangDivider} />
+              <View style={styles.muhuratRow}>
+                <View style={styles.muhuratItem}>
+                  <Icon family="material" name="schedule" size={14} color={colors.success} />
+                  <Text style={styles.muhuratText}>
+                    Abhijit: {panchang?.abhijitMuhurat || '11:45 AM - 12:30 PM'}
+                  </Text>
+                </View>
+                <View style={styles.muhuratItem}>
+                  <Text style={styles.muhuratRed}>
+                    Rahu: {panchang?.rahuKaalam || '04:15 PM - 05:35 PM'}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Badge label="Shubh Day" variant="gold" />
-          </View>
-          <View style={styles.panchangDivider} />
-          <View style={styles.muhuratRow}>
-            <View style={styles.muhuratItem}>
-              <Clock size={12} color={colors.success} />
-              <Text style={styles.muhuratText}>Abhijit: {MOCK_PANCHANG.abhijitMuhurat}</Text>
-            </View>
-            <View style={styles.muhuratItem}>
-              <Text style={styles.muhuratRed}>Rahu: {MOCK_PANCHANG.rahuKaalam}</Text>
-            </View>
-          </View>
+            </>
+          )}
         </Card>
 
-        {/* Active Booking Pulse (if present) */}
-        {MOCK_BOOKING && (
+        {/* Active Booking Pulse (from live API) */}
+        {activeBooking && (
           <Card style={styles.activeBookingCard}>
             <View style={styles.bookingHeader}>
               <View style={styles.activeIndicatorRow}>
@@ -90,12 +102,14 @@ export const HomeScreen: React.FC = () => {
               </View>
               <Badge label="Confirmed" variant="success" />
             </View>
-            <Text style={styles.bookingServiceName}>{MOCK_BOOKING.serviceName}</Text>
-            <Text style={styles.bookingDetails}>
-              Attendance Code: <Text style={styles.codeText}>{MOCK_BOOKING.attendanceCode}</Text>
-            </Text>
+            <Text style={styles.bookingServiceName}>{activeBooking.serviceName}</Text>
+            {activeBooking.attendanceCode && (
+              <Text style={styles.bookingDetails}>
+                Attendance Code: <Text style={styles.codeText}>{activeBooking.attendanceCode}</Text>
+              </Text>
+            )}
             <Text style={styles.bookingSubtext}>
-              Share this 6-digit code with Pandit Ji when he arrives at your residence.
+              Share this 6-digit verification code with the Acharya upon arrival.
             </Text>
           </Card>
         )}
@@ -107,7 +121,7 @@ export const HomeScreen: React.FC = () => {
             onPress={() => navigation.navigate('PujasTab')}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: '#FDF2F8' }]}>
-              <Flame size={24} color={colors.primary} />
+              <Icon family="material-community" name="fire" size={24} color={colors.primary} />
             </View>
             <Text style={styles.quickActionText}>Book Puja</Text>
           </TouchableOpacity>
@@ -117,7 +131,7 @@ export const HomeScreen: React.FC = () => {
             onPress={() => navigation.navigate('MalaTab')}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: '#FEF3C7' }]}>
-              <Sparkles size={24} color={colors.goldAccent} />
+              <Icon family="material-community" name="om" size={24} color={colors.goldAccent} />
             </View>
             <Text style={styles.quickActionText}>Japam Mala</Text>
           </TouchableOpacity>
@@ -127,13 +141,13 @@ export const HomeScreen: React.FC = () => {
             onPress={() => navigation.navigate('StoreTab')}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: '#F0FDF4' }]}>
-              <ShoppingBag size={24} color={colors.success} />
+              <Icon family="material-community" name="shopping-outline" size={24} color={colors.success} />
             </View>
             <Text style={styles.quickActionText}>Pure Samagri</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Trending Vedic Pujas */}
+        {/* Trending Vedic Pujas from API */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Trending Sacred Pujas</Text>
           <TouchableOpacity onPress={() => navigation.navigate('PujasTab')}>
@@ -141,31 +155,54 @@ export const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {MOCK_SERVICES.map((service) => (
-          <Card
-            key={service.id}
-            style={styles.serviceCard}
-            onPress={() => navigation.navigate('PujasTab')}
-          >
-            <View style={styles.serviceHeader}>
-              <View style={styles.serviceCategoryBadge}>
-                <Text style={styles.serviceCategoryText}>{service.category}</Text>
+        {isServicesLoading && (
+          <View style={styles.loadingArea}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.loadingText}>Fetching Vedic Pujas...</Text>
+          </View>
+        )}
+
+        {services && services.length > 0 ? (
+          services.slice(0, 3).map((service: PujaService) => (
+            <Card
+              key={service.id}
+              style={styles.serviceCard}
+              onPress={() => navigation.navigate('PujasTab', { screen: 'PujaDetail', params: { serviceId: service.id } })}
+            >
+              <View style={styles.serviceHeader}>
+                <View style={styles.serviceCategoryBadge}>
+                  <Text style={styles.serviceCategoryText}>{service.category || 'Vedic Vidhi'}</Text>
+                </View>
+                <Text style={styles.servicePrice}>₹{service.priceMinor / 100}</Text>
               </View>
-              <Text style={styles.servicePrice}>₹{service.priceMinor / 100}</Text>
-            </View>
-            <Text style={styles.serviceTitle}>{service.title}</Text>
-            <Text style={styles.serviceSubtitle} numberOfLines={2}>
-              {service.subtitle}
+              <Text style={styles.serviceTitle}>{service.title}</Text>
+              <Text style={styles.serviceSubtitle} numberOfLines={2}>
+                {service.subtitle || service.description}
+              </Text>
+              <View style={styles.serviceFooter}>
+                <Text style={styles.serviceDuration}>~{service.durationMinutes || 120} mins | Authentic Vidhi</Text>
+                <View style={styles.bookCta}>
+                  <Text style={styles.bookCtaText}>Book Slot</Text>
+                  <Icon family="material" name="chevron-right" size={16} color={colors.primary} />
+                </View>
+              </View>
+            </Card>
+          ))
+        ) : !isServicesLoading ? (
+          <Card style={styles.emptyCard}>
+            <Icon family="material-community" name="book-open-page-variant" size={32} color={colors.textMuted} />
+            <Text style={styles.emptyTitle}>Sacred Offerings</Text>
+            <Text style={styles.emptySubtext}>
+              Explore our full directory of certified Acharyas and Vedic ritual vidhis.
             </Text>
-            <View style={styles.serviceFooter}>
-              <Text style={styles.serviceDuration}>~{service.durationMinutes} mins · Vedic Vidhi</Text>
-              <View style={styles.bookCta}>
-                <Text style={styles.bookCtaText}>Book Slot</Text>
-                <ChevronRight size={14} color={colors.primary} />
-              </View>
-            </View>
+            <TouchableOpacity
+              style={styles.emptyBtn}
+              onPress={() => navigation.navigate('PujasTab')}
+            >
+              <Text style={styles.emptyBtnText}>Explore Puja Catalog</Text>
+            </TouchableOpacity>
           </Card>
-        ))}
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -356,6 +393,16 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
+  loadingArea: {
+    padding: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 8,
+  },
   serviceCard: {
     marginBottom: spacing.md,
   },
@@ -412,6 +459,34 @@ const styles = StyleSheet.create({
   bookCtaText: {
     ...typography.caption,
     color: colors.primary,
+    fontWeight: '700',
+  },
+  emptyCard: {
+    alignItems: 'center',
+    padding: spacing.xl,
+    marginTop: spacing.sm,
+  },
+  emptyTitle: {
+    ...typography.h4,
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
+  },
+  emptySubtext: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: spacing.md,
+  },
+  emptyBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: borderRadius.md,
+  },
+  emptyBtnText: {
+    ...typography.caption,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
 });

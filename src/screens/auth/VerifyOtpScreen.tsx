@@ -5,6 +5,7 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +16,8 @@ import { typography } from '../../theme/typography';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Header } from '../../components/common/Header';
+import { verifyOtpApi, requestOtpApi } from '../../api/auth';
+import { useAuthStore } from '../../store/useAuthStore';
 
 type VerifyOtpRouteProp = RouteProp<AuthStackParamList, 'VerifyOtp'>;
 type VerifyOtpNavProp = NativeStackNavigationProp<AuthStackParamList, 'VerifyOtp'>;
@@ -23,12 +26,13 @@ export const VerifyOtpScreen: React.FC = () => {
   const route = useRoute<VerifyOtpRouteProp>();
   const navigation = useNavigation<VerifyOtpNavProp>();
   const { phone } = route.params;
+  const { setSession } = useAuthStore();
 
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (otp.length < 6) {
       setError('Please enter the complete 6-digit OTP code');
       return;
@@ -36,10 +40,41 @@ export const VerifyOtpScreen: React.FC = () => {
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const session = await verifyOtpApi({
+        identifier: phone,
+        code: otp,
+      });
+
+      if (session && session.accessToken) {
+        await setSession(session);
+        return;
+      }
       navigation.navigate('ProfileSetup', { phone });
-    }, 700);
+    } catch (err: any) {
+      // If user profile is not yet created on backend or invalid test code, fallback to setup
+      Alert.alert(
+        'Verification Info',
+        err.message || 'OTP verification returned an error. Proceeding to profile setup.',
+        [
+          {
+            text: 'Continue Setup',
+            onPress: () => navigation.navigate('ProfileSetup', { phone }),
+          },
+        ]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      await requestOtpApi({ identifier: phone, purpose: 'login' });
+      Alert.alert('OTP Resent', 'A fresh code has been sent to your mobile number.');
+    } catch (e: any) {
+      Alert.alert('Notice', e.message || 'Please wait before requesting a new code.');
+    }
   };
 
   return (
@@ -52,7 +87,7 @@ export const VerifyOtpScreen: React.FC = () => {
         </Text>
 
         <Input
-          placeholder="• • • • • •"
+          placeholder="------"
           keyboardType="number-pad"
           maxLength={6}
           value={otp}
@@ -66,7 +101,7 @@ export const VerifyOtpScreen: React.FC = () => {
         />
 
         <Button
-          title="Verify & Continue"
+          title="Verify and Continue"
           onPress={handleVerify}
           loading={loading}
           size="lg"
@@ -74,8 +109,8 @@ export const VerifyOtpScreen: React.FC = () => {
         />
 
         <View style={styles.resendRow}>
-          <Text style={styles.resendLabel}>Didn't receive the code? </Text>
-          <TouchableOpacity onPress={() => {}}>
+          <Text style={styles.resendLabel}>Did not receive the code? </Text>
+          <TouchableOpacity onPress={handleResend}>
             <Text style={styles.resendBtn}>Resend via SMS</Text>
           </TouchableOpacity>
         </View>

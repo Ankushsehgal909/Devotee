@@ -6,9 +6,10 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { PujaStackParamList } from '../../types';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -17,27 +18,61 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Header } from '../../components/common/Header';
 import { Button } from '../../components/common/Button';
-import { MOCK_SERVICES } from '../../api/mockData';
-import {
-  Clock,
-  Star,
-  CheckCircle2,
-  Package,
-  Calendar,
-  Sparkles,
-  MapPin,
-  Video,
-} from 'lucide-react-native';
+import { Icon } from '../../components/common/Icon';
+import { useService } from '../../api/services';
 
 type PujaDetailRouteProp = RouteProp<PujaStackParamList, 'PujaDetail'>;
 
 export const PujaDetailScreen: React.FC = () => {
   const route = useRoute<PujaDetailRouteProp>();
-  const navigation = useNavigation<any>();
   const { serviceId } = route.params;
 
-  const service = MOCK_SERVICES.find((s) => s.id === serviceId) || MOCK_SERVICES[0];
-  const [selectedMode, setSelectedMode] = useState<string>(service.availableModes[0]);
+  // Real API hook
+  const { data: service, isLoading } = useService(serviceId);
+  const [selectedMode, setSelectedMode] = useState<string>('home_visit');
+
+  if (isLoading || !service) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header title="Vedic Puja Details" showBack />
+        <View style={styles.centerLoading}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Fetching Ritual Details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const availableModes = service.availableModes && service.availableModes.length > 0
+    ? service.availableModes
+    : ['home_visit', 'online'];
+
+  const rituals = service.ritualsIncluded && service.ritualsIncluded.length > 0
+    ? service.ritualsIncluded
+    : [
+        'Ganesh Pujan and Swasti Vachan',
+        'Kalash Sthapana and Navagraha Avahan',
+        'Abhishek and Mool Mantra Chanting',
+        'Sacred Hawan with 108 Ahutis',
+        'Maha Mangal Aarti and Ashirvad',
+      ];
+
+  const weBring = service.samagriProvidedByUs && service.samagriProvidedByUs.length > 0
+    ? service.samagriProvidedByUs
+    : [
+        'Pure Gir Cow A2 Ghee (500g)',
+        'Certified Hawan Samagri with sacred herbs',
+        'Navagraha Samidha sticks',
+        'Roli, Akshat, Chandan, Janeu, Kalava',
+      ];
+
+  const devoteeArranges = service.samagriDevoteeArranges && service.samagriDevoteeArranges.length > 0
+    ? service.samagriDevoteeArranges
+    : [
+        'Fresh flowers and Tulsi leaves',
+        'Fresh fruits (5 varieties) and 5 Pan leaves',
+        'Raw cow milk (250ml) and Gangajal',
+      ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -47,17 +82,17 @@ export const PujaDetailScreen: React.FC = () => {
         {/* Divine Hero Header Banner */}
         <View style={styles.heroBanner}>
           <View style={styles.heroBadgeRow}>
-            <Badge label={service.category} variant="gold" />
+            <Badge label={service.category || 'Vedic Ceremony'} variant="gold" />
             <View style={styles.ratingBadge}>
-              <Star size={12} color={colors.goldAccent} fill={colors.goldAccent} />
-              <Text style={styles.ratingText}>{service.rating} ({service.reviewCount} reviews)</Text>
+              <Icon family="material" name="star" size={14} color={colors.goldAccent} />
+              <Text style={styles.ratingText}>{service.rating || 4.9} ({service.reviewCount || 108} reviews)</Text>
             </View>
           </View>
           <Text style={styles.heroTitle}>{service.title}</Text>
-          <Text style={styles.heroSubtitle}>{service.subtitle}</Text>
+          <Text style={styles.heroSubtitle}>{service.subtitle || service.description}</Text>
           <View style={styles.durationRow}>
-            <Clock size={14} color="#FDE68A" />
-            <Text style={styles.durationText}>Duration: ~{service.durationMinutes} Minutes (Complete Vidhi)</Text>
+            <Icon family="material" name="schedule" size={14} color="#FDE68A" />
+            <Text style={styles.durationText}>Duration: ~{service.durationMinutes || 120} Minutes (Complete Vidhi)</Text>
           </View>
         </View>
 
@@ -65,7 +100,7 @@ export const PujaDetailScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>Select Ceremony Mode</Text>
           <View style={styles.modeGrid}>
-            {service.availableModes.map((mode) => {
+            {availableModes.map((mode) => {
               const isSelected = selectedMode === mode;
               return (
                 <TouchableOpacity
@@ -73,11 +108,12 @@ export const PujaDetailScreen: React.FC = () => {
                   onPress={() => setSelectedMode(mode)}
                   style={[styles.modeCard, isSelected && styles.modeCardSelected]}
                 >
-                  {mode === 'home_visit' ? (
-                    <MapPin size={20} color={isSelected ? colors.primary : colors.textMuted} />
-                  ) : (
-                    <Video size={20} color={isSelected ? colors.primary : colors.textMuted} />
-                  )}
+                  <Icon
+                    family="material"
+                    name={mode === 'home_visit' ? 'home' : 'videocam'}
+                    size={22}
+                    color={isSelected ? colors.primary : colors.textMuted}
+                  />
                   <Text style={[styles.modeTitle, isSelected && styles.modeTitleSelected]}>
                     {mode === 'home_visit' ? 'Doorstep Visit' : 'Live Online'}
                   </Text>
@@ -90,12 +126,12 @@ export const PujaDetailScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Significance & Purana Reference */}
+        {/* Significance */}
         {service.significance && (
           <Card variant="warm" style={styles.section}>
             <View style={styles.significanceHeader}>
-              <Sparkles size={18} color={colors.goldAccent} />
-              <Text style={styles.significanceTitle}>Vedic Significance & Benefits</Text>
+              <Icon family="material-community" name="book-open-page-variant" size={18} color={colors.goldAccent} />
+              <Text style={styles.significanceTitle}>Vedic Significance and Benefits</Text>
             </View>
             <Text style={styles.significanceBody}>{service.significance}</Text>
           </Card>
@@ -103,11 +139,11 @@ export const PujaDetailScreen: React.FC = () => {
 
         {/* Rituals Included Checklist */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>Sacred Rituals Included ({service.ritualsIncluded.length})</Text>
+          <Text style={styles.sectionHeading}>Sacred Rituals Included ({rituals.length})</Text>
           <Card style={styles.checklistCard}>
-            {service.ritualsIncluded.map((ritual, idx) => (
+            {rituals.map((ritual, idx) => (
               <View key={idx} style={styles.checklistItem}>
-                <CheckCircle2 size={16} color={colors.success} style={styles.checkIcon} />
+                <Icon family="material" name="check-circle" size={16} color={colors.success} style={styles.checkIcon} />
                 <Text style={styles.checklistText}>{ritual}</Text>
               </View>
             ))}
@@ -116,15 +152,15 @@ export const PujaDetailScreen: React.FC = () => {
 
         {/* Samagri Responsibilities Split */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>Samagri & Preparations</Text>
+          <Text style={styles.sectionHeading}>Samagri and Preparations</Text>
           <Card style={styles.samagriCard}>
             <View style={styles.samagriCol}>
               <View style={styles.samagriHeader}>
-                <Package size={16} color={colors.primary} />
+                <Icon family="material-community" name="package-variant" size={16} color={colors.primary} />
                 <Text style={styles.samagriColTitle}>What VedSarthi Brings</Text>
               </View>
-              {service.samagriProvidedByUs.map((item, i) => (
-                <Text key={i} style={styles.samagriItem}>• {item}</Text>
+              {weBring.map((item, i) => (
+                <Text key={i} style={styles.samagriItem}>- {item}</Text>
               ))}
             </View>
 
@@ -132,11 +168,11 @@ export const PujaDetailScreen: React.FC = () => {
 
             <View style={styles.samagriCol}>
               <View style={styles.samagriHeader}>
-                <Clock size={16} color={colors.goldAccent} />
+                <Icon family="material" name="schedule" size={16} color={colors.goldAccent} />
                 <Text style={styles.samagriColTitle}>Devotee Arranges at Home</Text>
               </View>
-              {service.samagriDevoteeArranges.map((item, i) => (
-                <Text key={i} style={styles.samagriItem}>• {item}</Text>
+              {devoteeArranges.map((item, i) => (
+                <Text key={i} style={styles.samagriItem}>- {item}</Text>
               ))}
             </View>
           </Card>
@@ -147,15 +183,20 @@ export const PujaDetailScreen: React.FC = () => {
       <View style={styles.bottomBar}>
         <View>
           <Text style={styles.priceTag}>Total Dakshina</Text>
-          <Text style={styles.priceVal}>₹{service.priceMinor / 100}</Text>
-          <Text style={styles.advanceNote}>Advance: 25% (₹{(service.priceMinor * 0.25) / 100})</Text>
+          <Text style={styles.priceVal}>₹{service.priceMinor ? service.priceMinor / 100 : 3500}</Text>
+          <Text style={styles.advanceNote}>
+            Advance: 25% (₹{service.priceMinor ? (service.priceMinor * 0.25) / 100 : 875})
+          </Text>
         </View>
         <Button
           title="Select Shubh Muhurat"
           onPress={() => {
-            Alert.alert('Shubh Muhurat', `Ready to book slot for ${service.title}! In Module 3, this opens the Muhurat & Gotra Sankalp flow.`);
+            Alert.alert(
+              'Select Slot',
+              `Proceeding to select auspicious Muhurat slot for ${service.title}.`
+            );
           }}
-          rightIcon={<Calendar size={18} color="#FFFFFF" />}
+          rightIcon={<Icon family="material" name="calendar-today" size={18} color="#FFFFFF" />}
           size="lg"
           style={styles.bookActionBtn}
         />
@@ -168,6 +209,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgSand,
+  },
+  centerLoading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginTop: 8,
   },
   scrollContent: {
     paddingBottom: 100,

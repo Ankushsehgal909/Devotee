@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -14,25 +15,22 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Header } from '../../components/common/Header';
 import { Button } from '../../components/common/Button';
+import { Icon } from '../../components/common/Icon';
 import { useAuthStore } from '../../store/useAuthStore';
-import { MOCK_FAMILY } from '../../api/mockData';
-import {
-  User,
-  Flame,
-  Package,
-  Heart,
-  Users,
-  CreditCard,
-  MessageCircle,
-  LogOut,
-  ChevronRight,
-  ShieldCheck,
-} from 'lucide-react-native';
+import { useDevoteeAccount, useFamilyMembers, useBookings, useOrders } from '../../api/customer';
+import { FamilyMember } from '../../types';
 
 export const DevoteeDashboardScreen: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const devoteeName = user?.name || 'Suraj Sharma';
-  const devoteeGotra = user?.gotra || 'Kashyap';
+
+  // Real API hooks
+  const { data: serverUser, isLoading: isUserLoading } = useDevoteeAccount();
+  const { data: familyMembers, isLoading: isFamilyLoading } = useFamilyMembers();
+  const { data: bookings } = useBookings();
+  const { data: orders } = useOrders();
+
+  const devoteeName = serverUser?.name || user?.name || 'Suraj Sharma';
+  const devoteeGotra = serverUser?.gotra || user?.gotra || 'Kashyap';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -50,37 +48,37 @@ export const DevoteeDashboardScreen: React.FC = () => {
               <Badge
                 label="Verified"
                 variant="success"
-                icon={<ShieldCheck size={10} color={colors.success} />}
+                icon={<Icon family="material-community" name="shield-check" size={12} color={colors.success} />}
               />
             </View>
-            <Text style={styles.profileGotra}>{devoteeGotra} Gotra · Sanatan Devotee</Text>
-            <Text style={styles.profilePhone}>{user?.phone || '+91 98765 43210'}</Text>
+            <Text style={styles.profileGotra}>{devoteeGotra} Gotra | Sanatan Devotee</Text>
+            <Text style={styles.profilePhone}>{serverUser?.phone || user?.phone || '+91 98765 43210'}</Text>
           </View>
         </View>
 
         {/* 2x2 Metric Counters (from web dashboard analysis) */}
         <View style={styles.metricsGrid}>
           <Card style={styles.metricCard}>
-            <Flame size={20} color={colors.primary} />
-            <Text style={styles.metricVal}>3</Text>
-            <Text style={styles.metricLabel}>Completed Pujas</Text>
+            <Icon family="material-community" name="fire" size={22} color={colors.primary} />
+            <Text style={styles.metricVal}>{bookings?.length ?? 0}</Text>
+            <Text style={styles.metricLabel}>Puja Bookings</Text>
           </Card>
 
           <Card style={styles.metricCard}>
-            <Package size={20} color={colors.goldAccent} />
-            <Text style={styles.metricVal}>1</Text>
-            <Text style={styles.metricLabel}>Active Order</Text>
+            <Icon family="material-community" name="package-variant" size={22} color={colors.goldAccent} />
+            <Text style={styles.metricVal}>{orders?.length ?? 0}</Text>
+            <Text style={styles.metricLabel}>Samagri Orders</Text>
           </Card>
 
           <Card style={styles.metricCard}>
-            <Heart size={20} color={colors.danger} />
-            <Text style={styles.metricVal}>5</Text>
+            <Icon family="material" name="favorite-border" size={22} color={colors.danger} />
+            <Text style={styles.metricVal}>0</Text>
             <Text style={styles.metricLabel}>Saved Wishlist</Text>
           </Card>
 
           <Card style={styles.metricCard}>
-            <Users size={20} color={colors.success} />
-            <Text style={styles.metricVal}>{MOCK_FAMILY.length}</Text>
+            <Icon family="material" name="group" size={22} color={colors.success} />
+            <Text style={styles.metricVal}>{familyMembers?.length ?? 0}</Text>
             <Text style={styles.metricLabel}>Family Gotras</Text>
           </Card>
         </View>
@@ -88,50 +86,60 @@ export const DevoteeDashboardScreen: React.FC = () => {
         {/* Saved Family Sankalp Tree Card */}
         <Card variant="warm" style={styles.familyCard}>
           <View style={styles.familyHeader}>
-            <Users size={18} color={colors.primary} />
+            <Icon family="material" name="group" size={18} color={colors.primary} />
             <Text style={styles.familyTitle}>Registered Family Sankalp Tree</Text>
           </View>
           <Text style={styles.familySubtitle}>
             These family members are auto-recited during your Vedic ritual Sankalps.
           </Text>
 
-          {MOCK_FAMILY.map((member) => (
-            <View key={member.id} style={styles.memberItem}>
-              <View>
-                <Text style={styles.memberName}>{member.name} ({member.relation.toUpperCase()})</Text>
-                <Text style={styles.memberMeta}>
-                  Gotra: {member.gotra} · Nakshatra: {member.nakshatra}
-                </Text>
+          {isFamilyLoading ? (
+            <ActivityIndicator size="small" color={colors.primary} style={styles.loader} />
+          ) : familyMembers && familyMembers.length > 0 ? (
+            familyMembers.map((member: FamilyMember) => (
+              <View key={member.id} style={styles.memberItem}>
+                <View>
+                  <Text style={styles.memberName}>{member.name} ({member.relation.toUpperCase()})</Text>
+                  <Text style={styles.memberMeta}>
+                    Gotra: {member.gotra || 'Kashyap'} | Nakshatra: {member.nakshatra || 'Rohini'}
+                  </Text>
+                </View>
+                {member.isSankalpHead && (
+                  <Badge label="Head" variant="sacred" />
+                )}
               </View>
-              {member.isSankalpHead && (
-                <Badge label="Head" variant="sacred" />
-              )}
+            ))
+          ) : (
+            <View style={styles.emptyFamily}>
+              <Text style={styles.emptyFamilyText}>
+                No secondary family members registered yet. Add family members to include them in sacred sankalps.
+              </Text>
             </View>
-          ))}
+          )}
         </Card>
 
         {/* Portal Nav Actions List */}
         <Card style={styles.actionsCard}>
           <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
-            <CreditCard size={18} color={colors.primary} />
-            <Text style={styles.actionText}>Payment & Refund Ledger</Text>
-            <ChevronRight size={16} color={colors.textMuted} />
+            <Icon family="material" name="payment" size={20} color={colors.primary} />
+            <Text style={styles.actionText}>Payment and Refund Ledger</Text>
+            <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
           <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
-            <MessageCircle size={18} color={colors.primary} />
-            <Text style={styles.actionText}>Devotee HelpDesk & Chat Support</Text>
-            <ChevronRight size={16} color={colors.textMuted} />
+            <Icon family="material" name="chat-bubble-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionText}>Devotee HelpDesk and Chat Support</Text>
+            <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
           <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
-            <User size={18} color={colors.primary} />
-            <Text style={styles.actionText}>Edit Vedic Profile & Addresses</Text>
-            <ChevronRight size={16} color={colors.textMuted} />
+            <Icon family="material" name="person-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionText}>Edit Vedic Profile and Addresses</Text>
+            <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         </Card>
 
@@ -140,7 +148,7 @@ export const DevoteeDashboardScreen: React.FC = () => {
           title="Sign Out Devotee Session"
           variant="outline"
           onPress={logout}
-          leftIcon={<LogOut size={16} color={colors.primary} />}
+          leftIcon={<Icon family="material" name="logout" size={16} color={colors.primary} />}
           style={styles.logoutBtn}
         />
       </ScrollView>
@@ -243,6 +251,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginBottom: spacing.sm,
   },
+  loader: {
+    marginVertical: spacing.sm,
+  },
   memberItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -259,6 +270,14 @@ const styles = StyleSheet.create({
   memberMeta: {
     ...typography.captionSmall,
     color: colors.textMuted,
+  },
+  emptyFamily: {
+    paddingVertical: spacing.sm,
+  },
+  emptyFamilyText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    lineHeight: 18,
   },
   actionsCard: {
     padding: 0,

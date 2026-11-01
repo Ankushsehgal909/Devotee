@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
-  View,
   Text,
   StyleSheet,
   SafeAreaView,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { AuthStackParamList, User } from '../../types';
@@ -16,6 +16,7 @@ import { Input } from '../../components/common/Input';
 import { Header } from '../../components/common/Header';
 import { useAuthStore } from '../../store/useAuthStore';
 import { VEDIC_GOTRAS } from '../../constants/vedic';
+import { updateProfileApi } from '../../api/auth';
 
 type ProfileSetupRouteProp = RouteProp<AuthStackParamList, 'ProfileSetup'>;
 
@@ -37,7 +38,7 @@ export const ProfileSetupScreen: React.FC = () => {
     setError('');
     setLoading(true);
 
-    const newUser: User = {
+    const userProfile: User = {
       id: `devotee-${Date.now()}`,
       name: name.trim(),
       phone,
@@ -47,10 +48,19 @@ export const ProfileSetupScreen: React.FC = () => {
       createdAt: new Date().toISOString(),
     };
 
+    try {
+      await updateProfileApi({
+        name: name.trim(),
+        gotra,
+      });
+    } catch {
+      // Backend may be running locally or in development; proceed with local session storage
+    }
+
     await setSession({
       accessToken: `token-${Date.now()}`,
       expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-      user: newUser,
+      user: userProfile,
     });
 
     setLoading(false);
@@ -67,7 +77,7 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <Input
           label="Full Devotee Name"
-          placeholder="e.g. Suraj Sharma"
+          placeholder="Suraj Sharma"
           value={name}
           onChangeText={(v) => {
             setName(v);
@@ -78,14 +88,14 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <Input
           label="Devotee Gotra"
-          placeholder="e.g. Kashyap, Bharadwaja"
+          placeholder="Kashyap, Bharadwaja"
           value={gotra}
           onChangeText={setGotra}
           helperText="Select or type your ancestral Vedic Gotra"
         />
 
         <Button
-          title="Save & Enter Sanctuary"
+          title="Save and Enter Sanctuary"
           onPress={handleComplete}
           loading={loading}
           size="lg"

@@ -29,16 +29,15 @@ jest.mock('react-native-screens', () => ({
   enableScreens: jest.fn(),
 }));
 
-// Mock lucide-react-native icons
-jest.mock('lucide-react-native', () => {
+// Mock react-native-vector-icons
+const mockIcon = (name) => {
   const React = require('react');
-  const { View } = require('react-native');
-  return new Proxy(
-    {},
-    {
-      get: (_, prop) => {
-        return (props) => React.createElement(View, { testID: String(prop), ...props });
-      },
-    }
-  );
-});
+  const { Text } = require('react-native');
+  return ({ name: iconName, size, color, ...props }) =>
+    React.createElement(Text, { testID: `${name}-${iconName}`, ...props }, iconName);
+};
+
+jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => mockIcon('MaterialCommunityIcons'));
+jest.mock('react-native-vector-icons/MaterialIcons', () => mockIcon('MaterialIcons'));
+jest.mock('react-native-vector-icons/Ionicons', () => mockIcon('Ionicons'));
+jest.mock('react-native-vector-icons/Feather', () => mockIcon('Feather'));
