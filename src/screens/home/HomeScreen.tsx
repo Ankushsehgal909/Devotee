@@ -3,11 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -15,6 +14,7 @@ import { typography } from '../../theme/typography';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Icon } from '../../components/common/Icon';
+import { PanchangSkeleton, PujaCardSkeleton } from '../../components/common/Skeleton';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useServices } from '../../api/services';
 import { usePanchang, useBookings, useDevoteeAccount } from '../../api/customer';
@@ -36,7 +36,7 @@ export const HomeScreen: React.FC = () => {
   const devoteeGotra = serverUser?.gotra || user?.gotra || 'Kashyap';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Top Devotee Navigation Bar */}
       <View style={styles.topNav}>
         <View>
@@ -54,43 +54,41 @@ export const HomeScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Daily Panchang Strip from live API */}
-        <Card variant="warm" style={styles.panchangCard}>
-          {isPanchangLoading ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <>
-              <View style={styles.panchangRow}>
-                <View style={styles.panchangLeft}>
-                  <View style={styles.panchangIcon}>
-                    <Icon family="material-community" name="weather-sunny" size={20} color={colors.goldAccent} />
-                  </View>
-                  <View>
-                    <Text style={styles.panchangTithi}>{panchang?.tithi || 'Shukla Ashtami'}</Text>
-                    <Text style={styles.panchangNakshatra}>
-                      {panchang?.nakshatra || 'Rohini'} Nakshatra | {panchang?.paksha || 'Shukla'} Paksha
-                    </Text>
-                  </View>
+        {/* Daily Panchang Strip from live API or Skeleton */}
+        {isPanchangLoading ? (
+          <PanchangSkeleton style={styles.panchangCard} />
+        ) : (
+          <Card variant="warm" style={styles.panchangCard}>
+            <View style={styles.panchangRow}>
+              <View style={styles.panchangLeft}>
+                <View style={styles.panchangIcon}>
+                  <Icon family="material-community" name="weather-sunny" size={20} color={colors.goldAccent} />
                 </View>
-                <Badge label="Shubh Day" variant="gold" />
-              </View>
-              <View style={styles.panchangDivider} />
-              <View style={styles.muhuratRow}>
-                <View style={styles.muhuratItem}>
-                  <Icon family="material" name="schedule" size={14} color={colors.success} />
-                  <Text style={styles.muhuratText}>
-                    Abhijit: {panchang?.abhijitMuhurat || '11:45 AM - 12:30 PM'}
-                  </Text>
-                </View>
-                <View style={styles.muhuratItem}>
-                  <Text style={styles.muhuratRed}>
-                    Rahu: {panchang?.rahuKaalam || '04:15 PM - 05:35 PM'}
+                <View>
+                  <Text style={styles.panchangTithi}>{panchang?.tithi || 'Shukla Ashtami'}</Text>
+                  <Text style={styles.panchangNakshatra}>
+                    {panchang?.nakshatra || 'Rohini'} Nakshatra | {panchang?.paksha || 'Shukla'} Paksha
                   </Text>
                 </View>
               </View>
-            </>
-          )}
-        </Card>
+              <Badge label="Shubh Day" variant="gold" />
+            </View>
+            <View style={styles.panchangDivider} />
+            <View style={styles.muhuratRow}>
+              <View style={styles.muhuratItem}>
+                <Icon family="material" name="schedule" size={14} color={colors.success} />
+                <Text style={styles.muhuratText}>
+                  Abhijit: {panchang?.abhijitMuhurat || '11:45 AM - 12:30 PM'}
+                </Text>
+              </View>
+              <View style={styles.muhuratItem}>
+                <Text style={styles.muhuratRed}>
+                  Rahu: {panchang?.rahuKaalam || '04:15 PM - 05:35 PM'}
+                </Text>
+              </View>
+            </View>
+          </Card>
+        )}
 
         {/* Active Booking Pulse (from live API) */}
         {activeBooking && (
@@ -155,14 +153,12 @@ export const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {isServicesLoading && (
-          <View style={styles.loadingArea}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.loadingText}>Fetching Vedic Pujas...</Text>
+        {isServicesLoading ? (
+          <View>
+            <PujaCardSkeleton style={styles.serviceCard} />
+            <PujaCardSkeleton style={styles.serviceCard} />
           </View>
-        )}
-
-        {services && services.length > 0 ? (
+        ) : services && services.length > 0 ? (
           services.slice(0, 3).map((service: PujaService) => (
             <Card
               key={service.id}
@@ -173,7 +169,7 @@ export const HomeScreen: React.FC = () => {
                 <View style={styles.serviceCategoryBadge}>
                   <Text style={styles.serviceCategoryText}>{service.category || 'Vedic Vidhi'}</Text>
                 </View>
-                <Text style={styles.servicePrice}>₹{service.priceMinor / 100}</Text>
+                <Text style={styles.servicePrice}>₹{service.priceMinor ? service.priceMinor / 100 : 3500}</Text>
               </View>
               <Text style={styles.serviceTitle}>{service.title}</Text>
               <Text style={styles.serviceSubtitle} numberOfLines={2}>
@@ -188,7 +184,7 @@ export const HomeScreen: React.FC = () => {
               </View>
             </Card>
           ))
-        ) : !isServicesLoading ? (
+        ) : (
           <Card style={styles.emptyCard}>
             <Icon family="material-community" name="book-open-page-variant" size={32} color={colors.textMuted} />
             <Text style={styles.emptyTitle}>Sacred Offerings</Text>
@@ -202,7 +198,7 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.emptyBtnText}>Explore Puja Catalog</Text>
             </TouchableOpacity>
           </Card>
-        ) : null}
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -392,16 +388,6 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.primary,
     fontWeight: '600',
-  },
-  loadingArea: {
-    padding: spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 8,
   },
   serviceCard: {
     marginBottom: spacing.md,

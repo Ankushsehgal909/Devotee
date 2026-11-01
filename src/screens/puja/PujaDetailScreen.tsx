@@ -3,12 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { PujaStackParamList } from '../../types';
 import { colors } from '../../theme/colors';
@@ -19,6 +18,7 @@ import { Badge } from '../../components/common/Badge';
 import { Header } from '../../components/common/Header';
 import { Button } from '../../components/common/Button';
 import { Icon } from '../../components/common/Icon';
+import { Skeleton, SkeletonLine, SkeletonCircle } from '../../components/common/Skeleton';
 import { useService } from '../../api/services';
 
 type PujaDetailRouteProp = RouteProp<PujaStackParamList, 'PujaDetail'>;
@@ -33,11 +33,42 @@ export const PujaDetailScreen: React.FC = () => {
 
   if (isLoading || !service) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <Header title="Vedic Puja Details" showBack />
-        <View style={styles.centerLoading}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Fetching Ritual Details...</Text>
+        <View style={styles.detailSkeletonContainer}>
+          {/* Hero Banner Skeleton */}
+          <View style={styles.heroSkeleton}>
+            <Skeleton width={100} height={20} borderRadius={borderRadius.full} style={{ marginBottom: spacing.sm }} />
+            <SkeletonLine width="85%" height={24} style={{ marginBottom: spacing.xs }} />
+            <SkeletonLine width="95%" height={14} style={{ marginBottom: spacing.xs }} />
+            <SkeletonLine width="60%" height={14} />
+          </View>
+          {/* Mode Selector Skeleton */}
+          <View style={[styles.section, { marginTop: spacing.md }]}>
+            <SkeletonLine width={160} height={16} style={{ marginBottom: spacing.sm }} />
+            <View style={styles.modeGrid}>
+              <View style={[styles.modeCard, { padding: spacing.lg }]}>
+                <SkeletonCircle size={24} style={{ marginBottom: spacing.xs }} />
+                <SkeletonLine width={80} height={14} />
+              </View>
+              <View style={[styles.modeCard, { padding: spacing.lg }]}>
+                <SkeletonCircle size={24} style={{ marginBottom: spacing.xs }} />
+                <SkeletonLine width={80} height={14} />
+              </View>
+            </View>
+          </View>
+          {/* Checklist Skeleton */}
+          <View style={[styles.section, { marginTop: spacing.md }]}>
+            <SkeletonLine width={180} height={16} style={{ marginBottom: spacing.sm }} />
+            <Card style={styles.checklistCard}>
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={[styles.checklistItem, { gap: 10 }]}>
+                  <SkeletonCircle size={16} />
+                  <SkeletonLine width="80%" height={14} />
+                </View>
+              ))}
+            </Card>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -75,7 +106,7 @@ export const PujaDetailScreen: React.FC = () => {
       ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header title={service.title} showBack />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -210,15 +241,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bgSand,
   },
-  centerLoading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  detailSkeletonContainer: {
+    padding: spacing.screenPadding,
   },
-  loadingText: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    marginTop: 8,
+  heroSkeleton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.borderWarm,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
   },
   scrollContent: {
     paddingBottom: 100,

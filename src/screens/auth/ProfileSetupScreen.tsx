@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import {
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { AuthStackParamList, User } from '../../types';
 import { colors } from '../../theme/colors';
@@ -67,7 +67,7 @@ export const ProfileSetupScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header title="Spiritual Profile Setup" showBack />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Vedic Identity</Text>

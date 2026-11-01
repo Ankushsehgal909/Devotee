@@ -29,6 +29,12 @@ jest.mock('react-native-screens', () => ({
   enableScreens: jest.fn(),
 }));
 
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => {
+  const actual = jest.requireActual('react-native-safe-area-context/lib/commonjs/jest/mock');
+  return actual.default || actual;
+});
+
 // Mock react-native-vector-icons
 const mockIcon = (name) => {
   const React = require('react');

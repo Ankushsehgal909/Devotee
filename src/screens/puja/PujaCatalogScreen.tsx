@@ -3,11 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -16,6 +15,7 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Header } from '../../components/common/Header';
 import { Icon } from '../../components/common/Icon';
+import { PujaCardSkeleton } from '../../components/common/Skeleton';
 import { useServices } from '../../api/services';
 import { PujaService } from '../../types';
 
@@ -81,7 +81,7 @@ export const PujaCatalogScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header title="Sacred Vedic Pujas" showBack={false} />
 
       {/* Category Filter Pills */}
@@ -114,9 +114,10 @@ export const PujaCatalogScreen: React.FC = () => {
       </View>
 
       {isLoading ? (
-        <View style={styles.loadingArea}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading Vedic Pujas...</Text>
+        <View style={styles.skeletonContainer}>
+          <PujaCardSkeleton style={styles.skeletonMargin} />
+          <PujaCardSkeleton style={styles.skeletonMargin} />
+          <PujaCardSkeleton style={styles.skeletonMargin} />
         </View>
       ) : (
         <FlatList
@@ -181,19 +182,15 @@ const styles = StyleSheet.create({
   categoryTextInactive: {
     color: colors.textSecondary,
   },
+  skeletonContainer: {
+    padding: spacing.screenPadding,
+  },
+  skeletonMargin: {
+    marginBottom: spacing.md,
+  },
   listContent: {
     padding: spacing.screenPadding,
     paddingBottom: spacing.xxxl,
-  },
-  loadingArea: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    marginTop: spacing.sm,
   },
   card: {
     marginBottom: spacing.md,

@@ -15,15 +15,20 @@ export const SplashScreen: React.FC = () => {
   const { loadStoredSession, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const init = async () => {
       await loadStoredSession();
-      setTimeout(() => {
+      timer = setTimeout(() => {
         if (!isAuthenticated) {
           navigation.replace('Onboarding');
         }
       }, 1500);
     };
     init();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [isAuthenticated, navigation]);
 
   return (

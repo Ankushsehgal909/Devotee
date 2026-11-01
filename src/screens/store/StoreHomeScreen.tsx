@@ -3,12 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -16,6 +15,7 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Header } from '../../components/common/Header';
 import { Icon } from '../../components/common/Icon';
+import { ProductCardSkeleton } from '../../components/common/Skeleton';
 import { useCatalog } from '../../api/shop';
 import { Product } from '../../types';
 import { useCartStore } from '../../store/useCartStore';
@@ -68,7 +68,7 @@ export const StoreHomeScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header
         title="Consecrated Samagri Store"
         showBack={false}
@@ -85,9 +85,10 @@ export const StoreHomeScreen: React.FC = () => {
       />
 
       {isLoading ? (
-        <View style={styles.centerLoading}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading Consecrated Items...</Text>
+        <View style={styles.skeletonContainer}>
+          <ProductCardSkeleton style={styles.skeletonMargin} />
+          <ProductCardSkeleton style={styles.skeletonMargin} />
+          <ProductCardSkeleton style={styles.skeletonMargin} />
         </View>
       ) : (
         <FlatList
@@ -125,15 +126,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bgSand,
   },
-  centerLoading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  skeletonContainer: {
+    padding: spacing.screenPadding,
   },
-  loadingText: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    marginTop: 8,
+  skeletonMargin: {
+    marginBottom: spacing.md,
   },
   cartBtn: {
     padding: spacing.xs,

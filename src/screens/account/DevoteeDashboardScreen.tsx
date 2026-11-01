@@ -3,11 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -16,6 +15,7 @@ import { Badge } from '../../components/common/Badge';
 import { Header } from '../../components/common/Header';
 import { Button } from '../../components/common/Button';
 import { Icon } from '../../components/common/Icon';
+import { DevoteeDashboardSkeleton, SkeletonLine } from '../../components/common/Skeleton';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useDevoteeAccount, useFamilyMembers, useBookings, useOrders } from '../../api/customer';
 import { FamilyMember } from '../../types';
@@ -33,124 +33,133 @@ export const DevoteeDashboardScreen: React.FC = () => {
   const devoteeGotra = serverUser?.gotra || user?.gotra || 'Kashyap';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header title="Devotee Spiritual Portal" showBack={false} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Devotee Profile Header Banner */}
-        <View style={styles.profileBanner}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitial}>{devoteeName.charAt(0).toUpperCase()}</Text>
-          </View>
-          <View style={styles.profileInfo}>
-            <View style={styles.nameRow}>
-              <Text style={styles.profileName}>{devoteeName}</Text>
-              <Badge
-                label="Verified"
-                variant="success"
-                icon={<Icon family="material-community" name="shield-check" size={12} color={colors.success} />}
-              />
+        {isUserLoading ? (
+          <DevoteeDashboardSkeleton />
+        ) : (
+          <>
+            {/* Devotee Profile Header Banner */}
+            <View style={styles.profileBanner}>
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarInitial}>{devoteeName.charAt(0).toUpperCase()}</Text>
+              </View>
+              <View style={styles.profileInfo}>
+                <View style={styles.nameRow}>
+                  <Text style={styles.profileName}>{devoteeName}</Text>
+                  <Badge
+                    label="Verified"
+                    variant="success"
+                    icon={<Icon family="material-community" name="shield-check" size={12} color={colors.success} />}
+                  />
+                </View>
+                <Text style={styles.profileGotra}>{devoteeGotra} Gotra | Sanatan Devotee</Text>
+                <Text style={styles.profilePhone}>{serverUser?.phone || user?.phone || '+91 98765 43210'}</Text>
+              </View>
             </View>
-            <Text style={styles.profileGotra}>{devoteeGotra} Gotra | Sanatan Devotee</Text>
-            <Text style={styles.profilePhone}>{serverUser?.phone || user?.phone || '+91 98765 43210'}</Text>
-          </View>
-        </View>
 
-        {/* 2x2 Metric Counters (from web dashboard analysis) */}
-        <View style={styles.metricsGrid}>
-          <Card style={styles.metricCard}>
-            <Icon family="material-community" name="fire" size={22} color={colors.primary} />
-            <Text style={styles.metricVal}>{bookings?.length ?? 0}</Text>
-            <Text style={styles.metricLabel}>Puja Bookings</Text>
-          </Card>
+            {/* 2x2 Metric Counters (from web dashboard analysis) */}
+            <View style={styles.metricsGrid}>
+              <Card style={styles.metricCard}>
+                <Icon family="material-community" name="fire" size={22} color={colors.primary} />
+                <Text style={styles.metricVal}>{bookings?.length ?? 0}</Text>
+                <Text style={styles.metricLabel}>Puja Bookings</Text>
+              </Card>
 
-          <Card style={styles.metricCard}>
-            <Icon family="material-community" name="package-variant" size={22} color={colors.goldAccent} />
-            <Text style={styles.metricVal}>{orders?.length ?? 0}</Text>
-            <Text style={styles.metricLabel}>Samagri Orders</Text>
-          </Card>
+              <Card style={styles.metricCard}>
+                <Icon family="material-community" name="package-variant" size={22} color={colors.goldAccent} />
+                <Text style={styles.metricVal}>{orders?.length ?? 0}</Text>
+                <Text style={styles.metricLabel}>Samagri Orders</Text>
+              </Card>
 
-          <Card style={styles.metricCard}>
-            <Icon family="material" name="favorite-border" size={22} color={colors.danger} />
-            <Text style={styles.metricVal}>0</Text>
-            <Text style={styles.metricLabel}>Saved Wishlist</Text>
-          </Card>
+              <Card style={styles.metricCard}>
+                <Icon family="material" name="favorite-border" size={22} color={colors.danger} />
+                <Text style={styles.metricVal}>0</Text>
+                <Text style={styles.metricLabel}>Saved Wishlist</Text>
+              </Card>
 
-          <Card style={styles.metricCard}>
-            <Icon family="material" name="group" size={22} color={colors.success} />
-            <Text style={styles.metricVal}>{familyMembers?.length ?? 0}</Text>
-            <Text style={styles.metricLabel}>Family Gotras</Text>
-          </Card>
-        </View>
+              <Card style={styles.metricCard}>
+                <Icon family="material" name="group" size={22} color={colors.success} />
+                <Text style={styles.metricVal}>{familyMembers?.length ?? 0}</Text>
+                <Text style={styles.metricLabel}>Family Gotras</Text>
+              </Card>
+            </View>
 
-        {/* Saved Family Sankalp Tree Card */}
-        <Card variant="warm" style={styles.familyCard}>
-          <View style={styles.familyHeader}>
-            <Icon family="material" name="group" size={18} color={colors.primary} />
-            <Text style={styles.familyTitle}>Registered Family Sankalp Tree</Text>
-          </View>
-          <Text style={styles.familySubtitle}>
-            These family members are auto-recited during your Vedic ritual Sankalps.
-          </Text>
+            {/* Saved Family Sankalp Tree Card */}
+            <Card variant="warm" style={styles.familyCard}>
+              <View style={styles.familyHeader}>
+                <Icon family="material" name="group" size={18} color={colors.primary} />
+                <Text style={styles.familyTitle}>Registered Family Sankalp Tree</Text>
+              </View>
+              <Text style={styles.familySubtitle}>
+                These family members are auto-recited during your Vedic ritual Sankalps.
+              </Text>
 
-          {isFamilyLoading ? (
-            <ActivityIndicator size="small" color={colors.primary} style={styles.loader} />
-          ) : familyMembers && familyMembers.length > 0 ? (
-            familyMembers.map((member: FamilyMember) => (
-              <View key={member.id} style={styles.memberItem}>
-                <View>
-                  <Text style={styles.memberName}>{member.name} ({member.relation.toUpperCase()})</Text>
-                  <Text style={styles.memberMeta}>
-                    Gotra: {member.gotra || 'Kashyap'} | Nakshatra: {member.nakshatra || 'Rohini'}
+              {isFamilyLoading ? (
+                <View style={{ gap: 8, paddingVertical: spacing.sm }}>
+                  <SkeletonLine width="60%" height={14} />
+                  <SkeletonLine width="80%" height={10} />
+                </View>
+              ) : familyMembers && familyMembers.length > 0 ? (
+                familyMembers.map((member: FamilyMember) => (
+                  <View key={member.id} style={styles.memberItem}>
+                    <View>
+                      <Text style={styles.memberName}>{member.name} ({member.relation.toUpperCase()})</Text>
+                      <Text style={styles.memberMeta}>
+                        Gotra: {member.gotra || 'Kashyap'} | Nakshatra: {member.nakshatra || 'Rohini'}
+                      </Text>
+                    </View>
+                    {member.isSankalpHead && (
+                      <Badge label="Head" variant="sacred" />
+                    )}
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyFamily}>
+                  <Text style={styles.emptyFamilyText}>
+                    No secondary family members registered yet. Add family members to include them in sacred sankalps.
                   </Text>
                 </View>
-                {member.isSankalpHead && (
-                  <Badge label="Head" variant="sacred" />
-                )}
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyFamily}>
-              <Text style={styles.emptyFamilyText}>
-                No secondary family members registered yet. Add family members to include them in sacred sankalps.
-              </Text>
-            </View>
-          )}
-        </Card>
+              )}
+            </Card>
 
-        {/* Portal Nav Actions List */}
-        <Card style={styles.actionsCard}>
-          <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
-            <Icon family="material" name="payment" size={20} color={colors.primary} />
-            <Text style={styles.actionText}>Payment and Refund Ledger</Text>
-            <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
+            {/* Portal Nav Actions List */}
+            <Card style={styles.actionsCard}>
+              <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
+                <Icon family="material" name="payment" size={20} color={colors.primary} />
+                <Text style={styles.actionText}>Payment and Refund Ledger</Text>
+                <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
 
-          <View style={styles.divider} />
+              <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
-            <Icon family="material" name="chat-bubble-outline" size={20} color={colors.primary} />
-            <Text style={styles.actionText}>Devotee HelpDesk and Chat Support</Text>
-            <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
+              <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
+                <Icon family="material" name="chat-bubble-outline" size={20} color={colors.primary} />
+                <Text style={styles.actionText}>Devotee HelpDesk and Chat Support</Text>
+                <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
 
-          <View style={styles.divider} />
+              <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
-            <Icon family="material" name="person-outline" size={20} color={colors.primary} />
-            <Text style={styles.actionText}>Edit Vedic Profile and Addresses</Text>
-            <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-        </Card>
+              <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
+                <Icon family="material" name="person-outline" size={20} color={colors.primary} />
+                <Text style={styles.actionText}>Edit Vedic Profile and Addresses</Text>
+                <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            </Card>
 
-        {/* Logout Button */}
-        <Button
-          title="Sign Out Devotee Session"
-          variant="outline"
-          onPress={logout}
-          leftIcon={<Icon family="material" name="logout" size={16} color={colors.primary} />}
-          style={styles.logoutBtn}
-        />
+            {/* Logout Button */}
+            <Button
+              title="Sign Out Devotee Session"
+              variant="outline"
+              onPress={logout}
+              leftIcon={<Icon family="material" name="logout" size={16} color={colors.primary} />}
+              style={styles.logoutBtn}
+            />
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -250,9 +259,6 @@ const styles = StyleSheet.create({
     ...typography.captionSmall,
     color: colors.textMuted,
     marginBottom: spacing.sm,
-  },
-  loader: {
-    marginVertical: spacing.sm,
   },
   memberItem: {
     flexDirection: 'row',
