@@ -1,6 +1,6 @@
 export const ENV = {
-  API_BASE_URL: 'http://10.0.2.2:3000/api/v1', // Default for Android emulator to localhost; can be replaced with production API
-  WS_URL: 'ws://10.0.2.2:3000',
+  API_BASE_URL: 'https://apiuat.vedsarthi.com/api/v1',
+  WS_URL: 'wss://apiuat.vedsarthi.com',
   APP_NAME: 'VedSarthi Devotee',
   APP_VERSION: '2.0.0',
   SUPPORT_PHONE: '+919876543210',
@@ -8,3 +8,4 @@ export const ENV = {
   DEFAULT_CURRENCY: 'INR',
   CURRENCY_SYMBOL: '₹',
 };
+

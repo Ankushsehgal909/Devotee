@@ -17,7 +17,20 @@ export type AuthStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
   Login: undefined;
-  VerifyOtp: { phone: string };
+  Register: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: {
+    resetToken: string;
+    identifier?: string;
+  };
+  VerifyOtp: {
+    otpId: string;
+    identifier: string;
+    purpose?: 'login' | 'register' | 'reset_password' | 'verify_email';
+    channel?: 'sms' | 'whatsapp' | 'email';
+    resendAvailableAt?: string;
+    phone?: string;
+  };
   ProfileSetup: { phone: string };
 };
 

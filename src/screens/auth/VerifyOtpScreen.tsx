@@ -1,22 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../types';
+import { AuthStackParamList, AuthSession, ResetPasswordTokenResult } from '../../types';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
+import { Icon } from '../../components/common/Icon';
 import { Header } from '../../components/common/Header';
-import { verifyOtpApi, requestOtpApi } from '../../api/auth';
+import { verifyOtpApi, resendOtpApi, requestOtpApi } from '../../api/auth';
 import { useAuthStore } from '../../store/useAuthStore';
 
 type VerifyOtpRouteProp = RouteProp<AuthStackParamList, 'VerifyOtp'>;
@@ -25,96 +28,220 @@ type VerifyOtpNavProp = NativeStackNavigationProp<AuthStackParamList, 'VerifyOtp
 export const VerifyOtpScreen: React.FC = () => {
   const route = useRoute<VerifyOtpRouteProp>();
   const navigation = useNavigation<VerifyOtpNavProp>();
-  const { phone } = route.params;
   const { setSession } = useAuthStore();
 
-  const [otp, setOtp] = useState('');
+  const {
+    otpId: initialOtpId,
+    identifier,
+    purpose = 'login',
+    channel = 'sms',
+    resendAvailableAt,
+    phone,
+  } = route.params;
+
+  const activeIdentifier = identifier || phone || '';
+  const [currentOtpId, setCurrentOtpId] = useState(initialOtpId || '');
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+
+  // Calculate cooldown countdown
+  const getInitialCooldown = () => {
+    if (resendAvailableAt) {
+      const remaining = Math.ceil((new Date(resendAvailableAt).getTime() - Date.now()) / 1000);
+      return Math.max(0, remaining);
+    }
+    return 30;
+  };
+
+  const [cooldown, setCooldown] = useState(getInitialCooldown);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      timerRef.current = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [cooldown]);
 
   const handleVerify = async () => {
-    if (otp.length < 6) {
-      setError('Please enter the complete 6-digit OTP code');
+    const cleanCode = code.trim();
+    if (cleanCode.length !== 6) {
+      setError('Please enter the complete 6-digit verification code');
       return;
     }
+
     setError('');
+    setNotice('');
     setLoading(true);
 
     try {
-      const session = await verifyOtpApi({
-        identifier: phone,
-        code: otp,
+      const result = await verifyOtpApi({
+        otpId: currentOtpId,
+        code: cleanCode,
       });
 
-      if (session && session.accessToken) {
+      if ('resetToken' in result) {
+        // Password reset flow
+        navigation.navigate('ResetPassword', {
+          resetToken: (result as ResetPasswordTokenResult).resetToken,
+          identifier: activeIdentifier,
+        });
+        return;
+      }
+
+      const session = result as AuthSession;
+      if (session && (session.tokens?.accessToken || session.accessToken)) {
         await setSession(session);
         return;
       }
-      navigation.navigate('ProfileSetup', { phone });
+
+      // If user profile is not complete
+      navigation.navigate('ProfileSetup', { phone: activeIdentifier });
     } catch (err: any) {
-      // If user profile is not yet created on backend or invalid test code, fallback to setup
-      Alert.alert(
-        'Verification Info',
-        err.message || 'OTP verification returned an error. Proceeding to profile setup.',
-        [
-          {
-            text: 'Continue Setup',
-            onPress: () => navigation.navigate('ProfileSetup', { phone }),
-          },
-        ]
-      );
+      setError(err.message || 'Invalid or expired verification code. Please check and retry.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
+    if (cooldown > 0 || resending) return;
+    setError('');
+    setNotice('');
+    setResending(true);
+
     try {
-      await requestOtpApi({ identifier: phone, purpose: 'login' });
-      Alert.alert('OTP Resent', 'A fresh code has been sent to your mobile number.');
-    } catch (e: any) {
-      Alert.alert('Notice', e.message || 'Please wait before requesting a new code.');
+      let nextResult;
+      if (currentOtpId) {
+        nextResult = await resendOtpApi({ otpId: currentOtpId });
+      } else {
+        nextResult = await requestOtpApi({
+          identifier: activeIdentifier,
+          purpose,
+          channel,
+        });
+      }
+
+      if (nextResult?.otpId) {
+        setCurrentOtpId(nextResult.otpId);
+      }
+
+      setNotice('A fresh verification code has been dispatched.');
+      setCooldown(30);
+    } catch (err: any) {
+      setError(err.message || 'Unable to resend code. Please wait before retrying.');
+    } finally {
+      setResending(false);
     }
   };
 
+  const channelLabel =
+    channel === 'whatsapp' ? 'WhatsApp' : channel === 'email' ? 'Email' : 'SMS';
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
-      <Header title="Verify Identity" showBack />
-      <View style={styles.content}>
-        <Text style={styles.title}>Enter 6-Digit Code</Text>
-        <Text style={styles.subtitle}>
-          We sent a verification OTP to <Text style={styles.bold}>{phone}</Text>
-        </Text>
+      <Header
+        title="Verify Identity"
+        showBack
+        onBackPress={() => navigation.goBack()}
+      />
 
-        <Input
-          placeholder="------"
-          keyboardType="number-pad"
-          maxLength={6}
-          value={otp}
-          onChangeText={(v) => {
-            setOtp(v);
-            if (error) setError('');
-          }}
-          error={error}
-          containerStyle={styles.otpInput}
-          inputStyle={styles.otpText}
-        />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.iconWrap}>
+            <View style={styles.iconCircle}>
+              <Icon family="material" name="mark-email-read" size={36} color={colors.primary} />
+            </View>
+          </View>
 
-        <Button
-          title="Verify and Continue"
-          onPress={handleVerify}
-          loading={loading}
-          size="lg"
-          style={styles.btn}
-        />
+          <View style={styles.headerArea}>
+            <Text style={styles.title}>Enter 6-Digit Code</Text>
+            <Text style={styles.subtitle}>
+              We sent a sacred verification OTP via {channelLabel} to
+            </Text>
+            <Text style={styles.boldContact}>{activeIdentifier}</Text>
+          </View>
 
-        <View style={styles.resendRow}>
-          <Text style={styles.resendLabel}>Did not receive the code? </Text>
-          <TouchableOpacity onPress={handleResend}>
-            <Text style={styles.resendBtn}>Resend via SMS</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+          {/* Notice Banner */}
+          {notice ? (
+            <View style={styles.noticeBox}>
+              <Icon family="material" name="check-circle" size={18} color={colors.success} />
+              <Text style={styles.noticeText}>{notice}</Text>
+            </View>
+          ) : null}
+
+          {/* Error Banner */}
+          {error ? (
+            <View style={styles.errorBox}>
+              <Icon family="material" name="error-outline" size={18} color={colors.error} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.formCard}>
+            <Input
+              placeholder="------"
+              keyboardType="number-pad"
+              maxLength={6}
+              value={code}
+              onChangeText={(val) => {
+                setCode(val);
+                if (error) setError('');
+                if (val.length === 6) {
+                  // user entered full 6 digits
+                }
+              }}
+              containerStyle={styles.otpInputWrap}
+              inputStyle={styles.otpInputText}
+              helperText="Enter the 6 digits exactly as received"
+            />
+
+            <Button
+              title="Verify & Continue"
+              onPress={handleVerify}
+              loading={loading}
+              disabled={code.length !== 6}
+              rightIcon={
+                <Icon family="material" name="arrow-forward" size={18} color={colors.white} />
+              }
+              size="lg"
+              style={styles.verifyBtn}
+            />
+
+            <View style={styles.resendArea}>
+              <Text style={styles.resendPrompt}>Didn't receive code?</Text>
+              {cooldown > 0 ? (
+                <Text style={styles.timerText}>Resend in {cooldown}s</Text>
+              ) : (
+                <TouchableOpacity onPress={handleResend} disabled={resending}>
+                  <Text style={styles.resendLink}>
+                    {resending ? 'Sending...' : 'Resend Code'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -124,45 +251,132 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bgSand,
   },
-  content: {
-    padding: spacing.screenPadding,
-    paddingTop: spacing.xxl,
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.screenPadding,
+    paddingVertical: spacing.lg,
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  iconWrap: {
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FDE8E8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#F8B4B4',
+  },
+  headerArea: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
   },
   title: {
-    ...typography.h2,
-    color: colors.textPrimary,
+    ...typography.h3,
+    color: colors.primaryDark,
+    fontFamily: typography.fontFamilySerif,
     marginBottom: spacing.xs,
-  },
-  subtitle: {
-    ...typography.bodyMedium,
-    color: colors.textMuted,
-    marginBottom: spacing.xl,
-  },
-  bold: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  otpInput: {
-    marginTop: spacing.md,
-  },
-  otpText: {
-    letterSpacing: 10,
-    fontSize: 22,
     textAlign: 'center',
   },
-  btn: {
+  subtitle: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  boldContact: {
+    ...typography.bodyMedium,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: 2,
+  },
+  noticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DEF7EC',
+    borderWidth: 1,
+    borderColor: '#BCF0DA',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: spacing.md,
+    gap: 8,
+  },
+  noticeText: {
+    ...typography.caption,
+    color: colors.success,
+    flex: 1,
+    fontWeight: '500',
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: spacing.md,
+    gap: 8,
+  },
+  errorText: {
+    ...typography.caption,
+    color: colors.error,
+    flex: 1,
+    fontWeight: '500',
+  },
+  formCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: spacing.cardPadding,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+  },
+  otpInputWrap: {
+    marginVertical: spacing.sm,
+  },
+  otpInputText: {
+    letterSpacing: 10,
+    fontSize: 24,
+    textAlign: 'center',
+    fontWeight: '700',
+    color: colors.primaryDark,
+  },
+  verifyBtn: {
     marginTop: spacing.md,
   },
-  resendRow: {
+  resendArea: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.cardBorder,
+    gap: 6,
   },
-  resendLabel: {
+  resendPrompt: {
     ...typography.bodySmall,
     color: colors.textMuted,
   },
-  resendBtn: {
+  timerText: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  resendLink: {
     ...typography.bodySmall,
     color: colors.primary,
     fontWeight: '700',

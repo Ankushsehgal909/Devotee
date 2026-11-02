@@ -24,9 +24,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setSession: async (session: AuthSession) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      const activeToken = session.tokens?.accessToken || session.accessToken || null;
       set({
-        isAuthenticated: true,
-        token: session.accessToken,
+        isAuthenticated: !!activeToken,
+        token: activeToken,
         user: session.user,
         isLoading: false,
       });
@@ -71,13 +72,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
         const session: AuthSession = JSON.parse(raw);
-        set({
-          isAuthenticated: true,
-          token: session.accessToken,
-          user: session.user,
-          isLoading: false,
-        });
-        return;
+        const activeToken = session.tokens?.accessToken || session.accessToken || null;
+        if (activeToken) {
+          set({
+            isAuthenticated: true,
+            token: activeToken,
+            user: session.user,
+            isLoading: false,
+          });
+          return;
+        }
       }
     } catch (e) {
       console.error('Failed to load auth session', e);
