@@ -18,6 +18,7 @@ import { Icon } from '../../components/common/Icon';
 import { PujaCardSkeleton } from '../../components/common/Skeleton';
 import { useServices } from '../../api/services';
 import { PujaService } from '../../types';
+import { resolveLocalizedText } from '../../utils/localization';
 
 const CATEGORIES = ['All', 'Prosperity and Vrat', 'Health and Long Life', 'Vastu and Shanti', 'Navagraha'];
 
@@ -30,55 +31,64 @@ export const PujaCatalogScreen: React.FC = () => {
     category: activeCategory === 'All' ? undefined : activeCategory,
   });
 
-  const renderServiceItem = ({ item }: { item: PujaService }) => (
-    <Card
-      style={styles.card}
-      onPress={() => navigation.navigate('PujaDetail', { serviceId: item.id })}
-    >
-      <View style={styles.cardTop}>
-        <View style={styles.flameIcon}>
-          <Icon family="material-community" name="fire" size={20} color={colors.primary} />
-        </View>
-        <View style={styles.cardHeaderInfo}>
-          <Text style={styles.serviceTitle}>{item.title}</Text>
-          <View style={styles.ratingRow}>
-            <Icon family="material" name="star" size={14} color={colors.goldAccent} />
-            <Text style={styles.ratingText}>{item.rating || 4.9}</Text>
-            <Text style={styles.reviewText}>({item.reviewCount || 108} reviews)</Text>
+  const renderServiceItem = ({ item }: { item: PujaService }) => {
+    const serviceTitle = resolveLocalizedText(item.title, 'Sacred Vedic Vidhi');
+    const serviceSubtitle = resolveLocalizedText(
+      item.subtitle || item.description,
+      'Authentic Vedic ceremony adhering to Shastric vidhis.'
+    );
+    const price = item.priceMinor ? item.priceMinor / 100 : 3500;
+
+    return (
+      <Card
+        style={styles.card}
+        onPress={() => navigation.navigate('PujaDetail', { serviceId: item.id })}
+      >
+        <View style={styles.cardTop}>
+          <View style={styles.flameIcon}>
+            <Icon family="material-community" name="fire" size={20} color={colors.primary} />
+          </View>
+          <View style={styles.cardHeaderInfo}>
+            <Text style={styles.serviceTitle}>{serviceTitle}</Text>
+            <View style={styles.ratingRow}>
+              <Icon family="material" name="star" size={14} color={colors.goldAccent} />
+              <Text style={styles.ratingText}>{item.rating || 4.9}</Text>
+              <Text style={styles.reviewText}>({item.reviewCount || 108} reviews)</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <Text style={styles.serviceSubtitle} numberOfLines={2}>
-        {item.subtitle || item.description}
-      </Text>
+        <Text style={styles.serviceSubtitle} numberOfLines={2}>
+          {serviceSubtitle}
+        </Text>
 
-      <View style={styles.modeTagsRow}>
-        {(item.availableModes || ['home_visit', 'online']).map((mode) => (
-          <Badge
-            key={mode}
-            label={mode === 'home_visit' ? 'Doorstep Visit' : mode === 'online' ? 'Live Online' : 'Temple'}
-            variant="sacred"
-            style={styles.modeBadge}
-          />
-        ))}
-      </View>
-
-      <View style={styles.cardFooter}>
-        <View>
-          <Text style={styles.priceLabel}>Ritual Dakshina</Text>
-          <Text style={styles.priceValue}>₹{item.priceMinor ? item.priceMinor / 100 : 3500}</Text>
+        <View style={styles.modeTagsRow}>
+          {(item.availableModes || ['home_visit', 'online']).map((mode) => (
+            <Badge
+              key={mode}
+              label={mode === 'home_visit' ? 'Doorstep Visit' : mode === 'online' ? 'Live Online' : 'Temple'}
+              variant="sacred"
+              style={styles.modeBadge}
+            />
+          ))}
         </View>
-        <TouchableOpacity
-          style={styles.bookBtn}
-          onPress={() => navigation.navigate('PujaDetail', { serviceId: item.id })}
-        >
-          <Text style={styles.bookBtnText}>Select Vidhi</Text>
-          <Icon family="material" name="chevron-right" size={16} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-    </Card>
-  );
+
+        <View style={styles.cardFooter}>
+          <View>
+            <Text style={styles.priceLabel}>Ritual Dakshina</Text>
+            <Text style={styles.priceValue}>₹{price}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.bookBtn}
+            onPress={() => navigation.navigate('PujaDetail', { serviceId: item.id })}
+          >
+            <Text style={styles.bookBtnText}>Select Vidhi</Text>
+            <Icon family="material" name="chevron-right" size={16} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </Card>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>

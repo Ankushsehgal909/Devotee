@@ -20,6 +20,7 @@ import { Button } from '../../components/common/Button';
 import { Icon } from '../../components/common/Icon';
 import { Skeleton, SkeletonLine, SkeletonCircle } from '../../components/common/Skeleton';
 import { useService } from '../../api/services';
+import { resolveLocalizedText } from '../../utils/localization';
 
 type PujaDetailRouteProp = RouteProp<PujaStackParamList, 'PujaDetail'>;
 
@@ -105,22 +106,30 @@ export const PujaDetailScreen: React.FC = () => {
         'Raw cow milk (250ml) and Gangajal',
       ];
 
+  const serviceTitle = resolveLocalizedText(service.title, 'Vedic Puja Details');
+  const serviceSubtitle = resolveLocalizedText(
+    service.subtitle || service.description,
+    'Authentic Vedic ceremony adhering to Shastric vidhis.'
+  );
+  const significanceText = resolveLocalizedText(service.significance, '');
+  const categoryLabel = resolveLocalizedText(service.category, 'Vedic Ceremony');
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <Header title={service.title} showBack />
+      <Header title={serviceTitle} showBack />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Divine Hero Header Banner */}
         <View style={styles.heroBanner}>
           <View style={styles.heroBadgeRow}>
-            <Badge label={service.category || 'Vedic Ceremony'} variant="gold" />
+            <Badge label={categoryLabel} variant="gold" />
             <View style={styles.ratingBadge}>
               <Icon family="material" name="star" size={14} color={colors.goldAccent} />
               <Text style={styles.ratingText}>{service.rating || 4.9} ({service.reviewCount || 108} reviews)</Text>
             </View>
           </View>
-          <Text style={styles.heroTitle}>{service.title}</Text>
-          <Text style={styles.heroSubtitle}>{service.subtitle || service.description}</Text>
+          <Text style={styles.heroTitle}>{serviceTitle}</Text>
+          <Text style={styles.heroSubtitle}>{serviceSubtitle}</Text>
           <View style={styles.durationRow}>
             <Icon family="material" name="schedule" size={14} color="#FDE68A" />
             <Text style={styles.durationText}>Duration: ~{service.durationMinutes || 120} Minutes (Complete Vidhi)</Text>
@@ -158,15 +167,15 @@ export const PujaDetailScreen: React.FC = () => {
         </View>
 
         {/* Significance */}
-        {service.significance && (
+        {significanceText ? (
           <Card variant="warm" style={styles.section}>
             <View style={styles.significanceHeader}>
               <Icon family="material-community" name="book-open-page-variant" size={18} color={colors.goldAccent} />
               <Text style={styles.significanceTitle}>Vedic Significance and Benefits</Text>
             </View>
-            <Text style={styles.significanceBody}>{service.significance}</Text>
+            <Text style={styles.significanceBody}>{significanceText}</Text>
           </Card>
-        )}
+        ) : null}
 
         {/* Rituals Included Checklist */}
         <View style={styles.section}>

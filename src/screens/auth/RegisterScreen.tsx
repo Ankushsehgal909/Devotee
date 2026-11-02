@@ -92,7 +92,12 @@ export const RegisterScreen: React.FC = () => {
         navigation.navigate('Login');
       }
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please check your details and try again.');
+      const msg = err?.message || 'Registration failed. Please check your details and try again.';
+      if (err?.statusCode === 409 || msg.toLowerCase().includes('already exists')) {
+        setError('An account with this phone or email already exists. Tap below to sign in or verify.');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -126,7 +131,18 @@ export const RegisterScreen: React.FC = () => {
           {error ? (
             <View style={styles.errorBox}>
               <Icon family="material" name="error-outline" size={18} color={colors.error} />
-              <Text style={styles.errorText}>{error}</Text>
+              <View style={styles.errorContent}>
+                <Text style={styles.errorText}>{error}</Text>
+                {error.includes('exists') || error.includes('verify') ? (
+                  <TouchableOpacity
+                    style={styles.errorActionBtn}
+                    onPress={() => navigation.navigate('Login')}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.errorActionText}>Go to Login / Verify →</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             </View>
           ) : null}
 
@@ -298,7 +314,7 @@ const styles = StyleSheet.create({
   },
   errorBox: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#FEE2E2',
     borderWidth: 1,
     borderColor: '#FCA5A5',
@@ -308,11 +324,24 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     gap: 8,
   },
+  errorContent: {
+    flex: 1,
+  },
   errorText: {
     ...typography.caption,
     color: colors.error,
-    flex: 1,
     fontWeight: '500',
+    lineHeight: 18,
+  },
+  errorActionBtn: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  errorActionText: {
+    ...typography.caption,
+    color: colors.primaryDark,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   formCard: {
     backgroundColor: colors.white,

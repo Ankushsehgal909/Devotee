@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { colors } from '../../theme/colors';
 import { borderRadius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { resolveLocalizedText } from '../../utils/localization';
 
 export type BadgeVariant = 'success' | 'warning' | 'danger' | 'sacred' | 'neutral' | 'gold';
 
 interface BadgeProps {
-  label: string;
+  label: any;
   variant?: BadgeVariant;
   style?: ViewStyle;
   textStyle?: TextStyle;
@@ -62,7 +63,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <View style={[styles.base, container, style]}>
       {icon && <View style={styles.iconContainer}>{icon}</View>}
-      <Text style={[styles.baseText, text, textStyle]}>{label}</Text>
+      <Text style={[styles.baseText, text, textStyle]}>{resolveLocalizedText(label)}</Text>
     </View>
   );
 };

@@ -19,6 +19,7 @@ import { DevoteeDashboardSkeleton, SkeletonLine } from '../../components/common/
 import { useAuthStore } from '../../store/useAuthStore';
 import { useDevoteeAccount, useFamilyMembers, useBookings, useOrders } from '../../api/customer';
 import { FamilyMember } from '../../types';
+import { resolveLocalizedText } from '../../utils/localization';
 
 export const DevoteeDashboardScreen: React.FC = () => {
   const { user, logout } = useAuthStore();
@@ -29,8 +30,8 @@ export const DevoteeDashboardScreen: React.FC = () => {
   const { data: bookings } = useBookings();
   const { data: orders } = useOrders();
 
-  const devoteeName = serverUser?.name || user?.name || 'Suraj Sharma';
-  const devoteeGotra = serverUser?.gotra || user?.gotra || 'Kashyap';
+  const devoteeName = resolveLocalizedText(serverUser?.name || user?.name, 'Devotee');
+  const devoteeGotra = resolveLocalizedText(serverUser?.gotra || user?.gotra, 'Kashyap');
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>

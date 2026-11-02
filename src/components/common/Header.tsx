@@ -5,10 +5,11 @@ import { Icon } from './Icon';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { resolveLocalizedText } from '../../utils/localization';
 
 interface HeaderProps {
-  title: string;
-  subtitle?: string;
+  title: any;
+  subtitle?: any;
   showBack?: boolean;
   onBackPress?: () => void;
   rightAction?: React.ReactNode;
@@ -48,11 +49,11 @@ export const Header: React.FC<HeaderProps> = ({
         )}
         <View style={styles.titleContainer}>
           <Text style={styles.title} numberOfLines={1}>
-            {title}
+            {resolveLocalizedText(title)}
           </Text>
           {subtitle && (
             <Text style={styles.subtitle} numberOfLines={1}>
-              {subtitle}
+              {resolveLocalizedText(subtitle)}
             </Text>
           )}
         </View>

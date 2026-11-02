@@ -19,6 +19,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useServices } from '../../api/services';
 import { usePanchang, useBookings, useDevoteeAccount } from '../../api/customer';
 import { PujaService } from '../../types';
+import { resolveLocalizedText } from '../../utils/localization';
 
 export const HomeScreen: React.FC = () => {
   const { user } = useAuthStore();
@@ -32,8 +33,8 @@ export const HomeScreen: React.FC = () => {
 
   const activeBooking = bookings && bookings.length > 0 ? bookings[0] : null;
 
-  const devoteeName = serverUser?.name || user?.name || 'Devotee';
-  const devoteeGotra = serverUser?.gotra || user?.gotra || 'Kashyap';
+  const devoteeName = resolveLocalizedText(serverUser?.name || user?.name, 'Devotee');
+  const devoteeGotra = resolveLocalizedText(serverUser?.gotra || user?.gotra, 'Kashyap');
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -65,9 +66,9 @@ export const HomeScreen: React.FC = () => {
                   <Icon family="material-community" name="weather-sunny" size={20} color={colors.goldAccent} />
                 </View>
                 <View>
-                  <Text style={styles.panchangTithi}>{panchang?.tithi || 'Shukla Ashtami'}</Text>
+                  <Text style={styles.panchangTithi}>{resolveLocalizedText(panchang?.tithi, 'Shukla Ashtami')}</Text>
                   <Text style={styles.panchangNakshatra}>
-                    {panchang?.nakshatra || 'Rohini'} Nakshatra | {panchang?.paksha || 'Shukla'} Paksha
+                    {resolveLocalizedText(panchang?.nakshatra, 'Rohini')} Nakshatra | {resolveLocalizedText(panchang?.paksha, 'Shukla')} Paksha
                   </Text>
                 </View>
               </View>
@@ -78,12 +79,12 @@ export const HomeScreen: React.FC = () => {
               <View style={styles.muhuratItem}>
                 <Icon family="material" name="schedule" size={14} color={colors.success} />
                 <Text style={styles.muhuratText}>
-                  Abhijit: {panchang?.abhijitMuhurat || '11:45 AM - 12:30 PM'}
+                  Abhijit: {resolveLocalizedText(panchang?.abhijitMuhurat, '11:45 AM - 12:30 PM')}
                 </Text>
               </View>
               <View style={styles.muhuratItem}>
                 <Text style={styles.muhuratRed}>
-                  Rahu: {panchang?.rahuKaalam || '04:15 PM - 05:35 PM'}
+                  Rahu: {resolveLocalizedText(panchang?.rahuKaalam, '04:15 PM - 05:35 PM')}
                 </Text>
               </View>
             </View>
@@ -100,10 +101,12 @@ export const HomeScreen: React.FC = () => {
               </View>
               <Badge label="Confirmed" variant="success" />
             </View>
-            <Text style={styles.bookingServiceName}>{activeBooking.serviceName}</Text>
+            <Text style={styles.bookingServiceName}>
+              {resolveLocalizedText(activeBooking.serviceName, 'Sacred Vedic Ceremony')}
+            </Text>
             {activeBooking.attendanceCode && (
               <Text style={styles.bookingDetails}>
-                Attendance Code: <Text style={styles.codeText}>{activeBooking.attendanceCode}</Text>
+                Attendance Code: <Text style={styles.codeText}>{String(activeBooking.attendanceCode)}</Text>
               </Text>
             )}
             <Text style={styles.bookingSubtext}>
@@ -159,31 +162,41 @@ export const HomeScreen: React.FC = () => {
             <PujaCardSkeleton style={styles.serviceCard} />
           </View>
         ) : services && services.length > 0 ? (
-          services.slice(0, 3).map((service: PujaService) => (
-            <Card
-              key={service.id}
-              style={styles.serviceCard}
-              onPress={() => navigation.navigate('PujasTab', { screen: 'PujaDetail', params: { serviceId: service.id } })}
-            >
-              <View style={styles.serviceHeader}>
-                <View style={styles.serviceCategoryBadge}>
-                  <Text style={styles.serviceCategoryText}>{service.category || 'Vedic Vidhi'}</Text>
+          services.slice(0, 3).map((service: PujaService) => {
+            const serviceTitle = resolveLocalizedText(service.title, 'Sacred Vedic Vidhi');
+            const serviceSubtitle = resolveLocalizedText(
+              service.subtitle || service.description,
+              'Authentic Vedic ceremony adhering to Shastric vidhis.'
+            );
+            const categoryLabel = resolveLocalizedText(service.category, 'Vedic Vidhi');
+            const price = service.priceMinor ? service.priceMinor / 100 : 3500;
+
+            return (
+              <Card
+                key={service.id}
+                style={styles.serviceCard}
+                onPress={() => navigation.navigate('PujasTab', { screen: 'PujaDetail', params: { serviceId: service.id } })}
+              >
+                <View style={styles.serviceHeader}>
+                  <View style={styles.serviceCategoryBadge}>
+                    <Text style={styles.serviceCategoryText}>{categoryLabel}</Text>
+                  </View>
+                  <Text style={styles.servicePrice}>₹{price}</Text>
                 </View>
-                <Text style={styles.servicePrice}>₹{service.priceMinor ? service.priceMinor / 100 : 3500}</Text>
-              </View>
-              <Text style={styles.serviceTitle}>{service.title}</Text>
-              <Text style={styles.serviceSubtitle} numberOfLines={2}>
-                {service.subtitle || service.description}
-              </Text>
-              <View style={styles.serviceFooter}>
-                <Text style={styles.serviceDuration}>~{service.durationMinutes || 120} mins | Authentic Vidhi</Text>
-                <View style={styles.bookCta}>
-                  <Text style={styles.bookCtaText}>Book Slot</Text>
-                  <Icon family="material" name="chevron-right" size={16} color={colors.primary} />
+                <Text style={styles.serviceTitle}>{serviceTitle}</Text>
+                <Text style={styles.serviceSubtitle} numberOfLines={2}>
+                  {serviceSubtitle}
+                </Text>
+                <View style={styles.serviceFooter}>
+                  <Text style={styles.serviceDuration}>~{service.durationMinutes || 120} mins | Authentic Vidhi</Text>
+                  <View style={styles.bookCta}>
+                    <Text style={styles.bookCtaText}>Book Slot</Text>
+                    <Icon family="material" name="chevron-right" size={16} color={colors.primary} />
+                  </View>
                 </View>
-              </View>
-            </Card>
-          ))
+              </Card>
+            );
+          })
         ) : (
           <Card style={styles.emptyCard}>
             <Icon family="material-community" name="book-open-page-variant" size={32} color={colors.textMuted} />

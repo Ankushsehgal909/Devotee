@@ -59,6 +59,41 @@ export const VerifyOtpScreen: React.FC = () => {
   const [cooldown, setCooldown] = useState(getInitialCooldown);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const channelLabel =
+    channel === 'whatsapp' ? 'WhatsApp' : channel === 'email' ? 'Email' : 'SMS';
+
+  // If navigated without an active otpId (e.g. redirected from unverified login), auto-request challenge
+  useEffect(() => {
+    if (!initialOtpId && activeIdentifier) {
+      setLoading(true);
+      requestOtpApi({
+        identifier: activeIdentifier,
+        purpose,
+        channel,
+      })
+        .then((result) => {
+          if (result.otpId) {
+            setCurrentOtpId(result.otpId);
+          }
+          if (result.resendAvailableAt) {
+            const remaining = Math.ceil(
+              (new Date(result.resendAvailableAt).getTime() - Date.now()) / 1000
+            );
+            setCooldown(Math.max(0, remaining));
+          } else {
+            setCooldown(30);
+          }
+          setNotice(`Sacred verification code sent via ${channelLabel}.`);
+        })
+        .catch((err) => {
+          setError(err.message || 'Please tap Resend Code to receive your verification code.');
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [initialOtpId, activeIdentifier, purpose, channel, channelLabel]);
+
   useEffect(() => {
     if (cooldown > 0) {
       timerRef.current = setInterval(() => {
@@ -80,6 +115,11 @@ export const VerifyOtpScreen: React.FC = () => {
     const cleanCode = code.trim();
     if (cleanCode.length !== 6) {
       setError('Please enter the complete 6-digit verification code');
+      return;
+    }
+
+    if (!currentOtpId) {
+      setError('Verification session not active. Please tap Resend Code.');
       return;
     }
 
@@ -147,9 +187,6 @@ export const VerifyOtpScreen: React.FC = () => {
       setResending(false);
     }
   };
-
-  const channelLabel =
-    channel === 'whatsapp' ? 'WhatsApp' : channel === 'email' ? 'Email' : 'SMS';
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>

@@ -20,6 +20,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Icon } from '../../components/common/Icon';
 import { requestOtpApi, loginWithPasswordApi, normalizeIdentifier } from '../../api/auth';
+import { ApiError } from '../../api/client';
 import { useAuthStore } from '../../store/useAuthStore';
 
 type LoginNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -71,7 +72,49 @@ export const LoginScreen: React.FC = () => {
         phone: formattedPhone,
       });
     } catch (err: any) {
-      setError(err.message || 'Unable to request OTP. Please try again.');
+      const msg = err?.message || '';
+      const isUnverifiedOrRegisterRequired =
+        err?.statusCode === 403 ||
+        msg.toLowerCase().includes('register') ||
+        msg.toLowerCase().includes('not verified') ||
+        msg.toLowerCase().includes('verify this identifier');
+
+      if (isUnverifiedOrRegisterRequired) {
+        // Retry requesting OTP with purpose 'register' since account is pending verification
+        try {
+          const regResult = await requestOtpApi({
+            identifier: formattedPhone,
+            purpose: 'register',
+            channel,
+          });
+
+          navigation.navigate('VerifyOtp', {
+            otpId: regResult.otpId,
+            identifier: formattedPhone,
+            purpose: 'register',
+            channel,
+            resendAvailableAt: regResult.resendAvailableAt,
+            phone: formattedPhone,
+          });
+          return;
+        } catch (regErr: any) {
+          // If already requested or cooldown active, still navigate to VerifyOtp screen
+          if (regErr?.statusCode === 429 || regErr?.message?.toLowerCase().includes('cooldown')) {
+            navigation.navigate('VerifyOtp', {
+              otpId: '',
+              identifier: formattedPhone,
+              purpose: 'register',
+              channel,
+              phone: formattedPhone,
+            });
+            return;
+          }
+          setError(regErr?.message || msg || 'Unable to request OTP. Please try again.');
+          return;
+        }
+      }
+
+      setError(msg || 'Unable to request OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -91,9 +134,11 @@ export const LoginScreen: React.FC = () => {
     setError('');
     setLoading(true);
 
+    const formattedIdentifier = normalizeIdentifier(cleanIdentifier);
+
     try {
       const session = await loginWithPasswordApi({
-        identifier: cleanIdentifier,
+        identifier: formattedIdentifier,
         password,
       });
 
@@ -103,7 +148,51 @@ export const LoginScreen: React.FC = () => {
         throw new Error('Valid login session was not returned.');
       }
     } catch (err: any) {
-      const msg = err.message || 'Invalid credentials. Please verify your details.';
+      const msg = err?.message || 'Invalid credentials. Please verify your details.';
+      const isUnverified =
+        err?.statusCode === 403 ||
+        msg.includes('not verified') ||
+        msg.includes('Verify this identifier') ||
+        msg.includes('Registration is not verified') ||
+        err?.code === 'UNVERIFIED';
+
+      if (isUnverified) {
+        // Needs OTP verification before sign in
+        const purpose: 'register' | 'login' =
+          msg.toLowerCase().includes('register') || msg.toLowerCase().includes('registration')
+            ? 'register'
+            : 'login';
+        const otpChannel = formattedIdentifier.includes('@') ? 'email' : 'sms';
+
+        try {
+          const otpResult = await requestOtpApi({
+            identifier: formattedIdentifier,
+            purpose,
+            channel: otpChannel,
+          });
+
+          navigation.navigate('VerifyOtp', {
+            otpId: otpResult.otpId,
+            identifier: formattedIdentifier,
+            purpose,
+            channel: otpResult.channel || otpChannel,
+            resendAvailableAt: otpResult.resendAvailableAt,
+            phone: formattedIdentifier.includes('@') ? undefined : formattedIdentifier,
+          });
+          return;
+        } catch (otpErr: any) {
+          // If request OTP failed (e.g., cooldown or active challenge already sent), navigate to OTP screen
+          navigation.navigate('VerifyOtp', {
+            otpId: '',
+            identifier: formattedIdentifier,
+            purpose,
+            channel: otpChannel,
+            phone: formattedIdentifier.includes('@') ? undefined : formattedIdentifier,
+          });
+          return;
+        }
+      }
+
       setError(msg);
     } finally {
       setLoading(false);
@@ -177,7 +266,33 @@ export const LoginScreen: React.FC = () => {
           {error ? (
             <View style={styles.errorBox}>
               <Icon family="material" name="error-outline" size={18} color={colors.error} />
-              <Text style={styles.errorText}>{error}</Text>
+              <View style={styles.errorContent}>
+                <Text style={styles.errorText}>{error}</Text>
+                {(error.toLowerCase().includes('verif') ||
+                  error.toLowerCase().includes('pending') ||
+                  error.toLowerCase().includes('register')) && (identifier.trim() || phone.trim()) ? (
+                  <TouchableOpacity
+                    style={styles.errorActionBtn}
+                    onPress={() => {
+                      const id = identifier.trim() || phone.trim();
+                      const formatted = normalizeIdentifier(id);
+                      const isReg =
+                        error.toLowerCase().includes('register') ||
+                        error.toLowerCase().includes('registration');
+                      navigation.navigate('VerifyOtp', {
+                        otpId: '',
+                        identifier: formatted,
+                        purpose: isReg ? 'register' : 'login',
+                        channel: formatted.includes('@') ? 'email' : 'sms',
+                        phone: formatted.includes('@') ? undefined : formatted,
+                      });
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.errorActionText}>Verify with OTP now →</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             </View>
           ) : null}
 
@@ -436,7 +551,7 @@ const styles = StyleSheet.create({
   },
   errorBox: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#FEE2E2',
     borderWidth: 1,
     borderColor: '#FCA5A5',
@@ -446,11 +561,24 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     gap: 8,
   },
+  errorContent: {
+    flex: 1,
+  },
   errorText: {
     ...typography.caption,
     color: colors.error,
-    flex: 1,
     fontWeight: '500',
+    lineHeight: 18,
+  },
+  errorActionBtn: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  errorActionText: {
+    ...typography.caption,
+    color: colors.primaryDark,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   formCard: {
     backgroundColor: colors.white,

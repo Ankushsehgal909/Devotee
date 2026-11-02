@@ -37,8 +37,12 @@ export const colors = {
   warningBg: '#FEFCE8',
   danger: '#DC2626',          // Rahu Kaalam, cancellations, errors
   dangerBg: '#FEF2F2',
+  error: '#DC2626',
   info: '#2563EB',
   infoBg: '#EFF6FF',
+  white: '#FFFFFF',
+  cardBorder: '#F3E6D8',
+  borderDefault: '#EAE6E1',
 };
 
 export type ThemeColors = typeof colors;

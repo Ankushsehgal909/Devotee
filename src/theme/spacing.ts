@@ -7,6 +7,7 @@ export const spacing = {
   xxl: 24,
   xxxl: 32,
   screenPadding: 16,
+  cardPadding: 16,
 };
 
 export const borderRadius = {

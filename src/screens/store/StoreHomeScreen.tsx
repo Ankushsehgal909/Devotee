@@ -19,6 +19,7 @@ import { ProductCardSkeleton } from '../../components/common/Skeleton';
 import { useCatalog } from '../../api/shop';
 import { Product } from '../../types';
 import { useCartStore } from '../../store/useCartStore';
+import { resolveLocalizedText } from '../../utils/localization';
 
 export const StoreHomeScreen: React.FC = () => {
   const { addItem, getTotalCount } = useCartStore();
@@ -27,45 +28,54 @@ export const StoreHomeScreen: React.FC = () => {
   // Real API hook
   const { data: products, isLoading, refetch } = useCatalog();
 
-  const renderProduct = ({ item }: { item: Product }) => (
-    <Card style={styles.productCard}>
-      <View style={styles.cardHeader}>
-        <Badge
-          label="100% Pure"
-          variant="sacred"
-          icon={<Icon family="material-community" name="shield-check" size={12} color={colors.primary} />}
-        />
-        <View style={styles.ratingRow}>
-          <Icon family="material" name="star" size={14} color={colors.goldAccent} />
-          <Text style={styles.ratingText}>{item.rating || 5.0}</Text>
-        </View>
-      </View>
+  const renderProduct = ({ item }: { item: Product }) => {
+    const productTitle = resolveLocalizedText(item.title, 'Sacred Samagri');
+    const productDesc = resolveLocalizedText(
+      item.shortDescription || item.description,
+      'Consecrated pure Vedic samagri item.'
+    );
+    const price = item.priceMinor ? item.priceMinor / 100 : 499;
 
-      <Text style={styles.productTitle}>{item.title}</Text>
-      <Text style={styles.productDesc} numberOfLines={2}>
-        {item.shortDescription || item.description}
-      </Text>
-
-      <View style={styles.productFooter}>
-        <View>
-          <Text style={styles.priceVal}>₹{item.priceMinor ? item.priceMinor / 100 : 499}</Text>
-          {item.compareAtPriceMinor && (
-            <Text style={styles.strikePrice}>₹{item.compareAtPriceMinor / 100}</Text>
-          )}
+    return (
+      <Card style={styles.productCard}>
+        <View style={styles.cardHeader}>
+          <Badge
+            label="100% Pure"
+            variant="sacred"
+            icon={<Icon family="material-community" name="shield-check" size={12} color={colors.primary} />}
+          />
+          <View style={styles.ratingRow}>
+            <Icon family="material" name="star" size={14} color={colors.goldAccent} />
+            <Text style={styles.ratingText}>{item.rating || 5.0}</Text>
+          </View>
         </View>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => {
-            addItem(item, 1);
-            Alert.alert('Sacred Basket', `Added ${item.title} to your Sacred Basket.`);
-          }}
-        >
-          <Icon family="material" name="add" size={16} color="#FFFFFF" />
-          <Text style={styles.addBtnText}>Add</Text>
-        </TouchableOpacity>
-      </View>
-    </Card>
-  );
+
+        <Text style={styles.productTitle}>{productTitle}</Text>
+        <Text style={styles.productDesc} numberOfLines={2}>
+          {productDesc}
+        </Text>
+
+        <View style={styles.productFooter}>
+          <View>
+            <Text style={styles.priceVal}>₹{price}</Text>
+            {item.compareAtPriceMinor && (
+              <Text style={styles.strikePrice}>₹{item.compareAtPriceMinor / 100}</Text>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => {
+              addItem(item, 1);
+              Alert.alert('Sacred Basket', `Added ${productTitle} to your Sacred Basket.`);
+            }}
+          >
+            <Icon family="material" name="add" size={16} color="#FFFFFF" />
+            <Text style={styles.addBtnText}>Add</Text>
+          </TouchableOpacity>
+        </View>
+      </Card>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
