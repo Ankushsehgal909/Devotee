@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -20,10 +22,74 @@ import { useServices } from '../../api/services';
 import { usePanchang, useBookings, useDevoteeAccount } from '../../api/customer';
 import { PujaService } from '../../types';
 import { resolveLocalizedText } from '../../utils/localization';
+import { siteImages, getPujaImageUrl } from '../../constants/images';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const HERO_SLIDES = [
+  {
+    id: 'slide-1',
+    image: siteImages.homeSlide1,
+    title: 'Certified Gurukul Acharyas',
+    subtitle: 'Veda Murti Pandits from Kashi & Haridwar for authentic doorstep vidhis.',
+    cta: 'Book Vedic Puja',
+    target: 'PujasTab',
+  },
+  {
+    id: 'slide-2',
+    image: siteImages.homeSlide2,
+    title: 'Consecrated Samagri Kits',
+    subtitle: '100% pure Katyayana Smriti certified hawan herbs & Gir Cow A2 Ghee.',
+    cta: 'Order Pure Samagri',
+    target: 'StoreTab',
+  },
+  {
+    id: 'slide-3',
+    image: siteImages.homeSlide3,
+    title: 'Sacred Sankalp & Live Darshan',
+    subtitle: 'Gotra, Nakshatra, and Rashi consecrated ceremonies with live tracking.',
+    cta: 'Explore Directory',
+    target: 'PanditsDirectory',
+  },
+];
+
+const SACRED_VERTICALS = [
+  {
+    id: 'home-pujas',
+    title: 'Home Pujas',
+    image: siteImages.homeAssetsVerticalsHomePujas,
+    target: 'PujasTab',
+  },
+  {
+    id: 'gurukul-acharyas',
+    title: 'Acharyas',
+    image: siteImages.homeAssetsVerticalsGurukulAcharyas,
+    target: 'PanditsDirectory',
+  },
+  {
+    id: 'maha-anushthan',
+    title: 'Maha Yajna',
+    image: siteImages.homeAssetsVerticalsMahaAnushthan,
+    target: 'PujasTab',
+  },
+  {
+    id: 'pure-samagri',
+    title: 'Pure Samagri',
+    image: siteImages.homeAssetsVerticalsSacredSamagri,
+    target: 'StoreTab',
+  },
+  {
+    id: 'teerth-pujas',
+    title: 'Teerth Pujas',
+    image: siteImages.homeAssetsVerticalsTeerthEpujas,
+    target: 'PujasTab',
+  },
+];
 
 export const HomeScreen: React.FC = () => {
   const { user } = useAuthStore();
   const navigation = useNavigation<any>();
+  const [activeSlide, setActiveSlide] = useState(0);
 
   // Real API data hooks
   const { data: serverUser } = useDevoteeAccount();
@@ -45,16 +111,110 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.gotraText}>{devoteeGotra} Gotra | Sanatan Devotee</Text>
         </View>
         <View style={styles.topNavActions}>
-          <TouchableOpacity style={styles.iconBtn}>
-            <Icon family="material" name="favorite-border" size={20} color={colors.primary} />
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => navigation.navigate('FestivalCalendar')}
+          >
+            <Icon family="material-community" name="calendar-month-outline" size={20} color={colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn}>
-            <Icon family="material" name="notifications-none" size={20} color={colors.textPrimary} />
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => navigation.navigate('StoreTab', { screen: 'CartScreen' })}
+          >
+            <Icon family="material-community" name="shopping-outline" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Hero Banner Carousel Slider */}
+        <View style={styles.carouselContainer}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={(e) => {
+              const slide = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - spacing.screenPadding * 2));
+              setActiveSlide(slide);
+            }}
+            scrollEventThrottle={16}
+          >
+            {HERO_SLIDES.map((slide) => (
+              <View key={slide.id} style={styles.heroSlide}>
+                <Image
+                  source={{ uri: slide.image }}
+                  style={styles.heroSlideImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.heroSlideOverlay}>
+                  <Text style={styles.heroSlideTitle}>{slide.title}</Text>
+                  <Text style={styles.heroSlideSubtitle} numberOfLines={2}>
+                    {slide.subtitle}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.heroSlideCta}
+                    onPress={() => {
+                      if (slide.target === 'PanditsDirectory') {
+                        navigation.navigate('PanditsDirectory');
+                      } else {
+                        navigation.navigate(slide.target);
+                      }
+                    }}
+                  >
+                    <Text style={styles.heroSlideCtaText}>{slide.cta}</Text>
+                    <Icon family="material" name="arrow-forward" size={14} color={colors.white} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+          <View style={styles.carouselPagination}>
+            {HERO_SLIDES.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.paginationDot,
+                  activeSlide === i && styles.paginationDotActive,
+                ]}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Sacred Verticals Horizontal Strip (Like Web) */}
+        <View style={styles.verticalsSection}>
+          <Text style={styles.verticalsHeader}>Sacred Sanatan Offerings</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.verticalsRow}
+          >
+            {SACRED_VERTICALS.map((vert) => (
+              <TouchableOpacity
+                key={vert.id}
+                style={styles.verticalCard}
+                onPress={() => {
+                  if (vert.target === 'PanditsDirectory') {
+                    navigation.navigate('PanditsDirectory');
+                  } else {
+                    navigation.navigate(vert.target);
+                  }
+                }}
+                activeOpacity={0.85}
+              >
+                <Image
+                  source={{ uri: vert.image }}
+                  style={styles.verticalImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.verticalOverlay}>
+                  <Text style={styles.verticalText}>{vert.title}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Daily Panchang Strip from live API or Skeleton */}
         {isPanchangLoading ? (
           <PanchangSkeleton style={styles.panchangCard} />
@@ -93,7 +253,15 @@ export const HomeScreen: React.FC = () => {
 
         {/* Active Booking Pulse (from live API) */}
         {activeBooking && (
-          <Card style={styles.activeBookingCard}>
+          <Card
+            style={styles.activeBookingCard}
+            onPress={() =>
+              navigation.navigate('PujasTab', {
+                screen: 'BookingDetail',
+                params: { bookingId: activeBooking.id },
+              })
+            }
+          >
             <View style={styles.bookingHeader}>
               <View style={styles.activeIndicatorRow}>
                 <View style={styles.activeDot} />
@@ -105,9 +273,12 @@ export const HomeScreen: React.FC = () => {
               {resolveLocalizedText(activeBooking.serviceName, 'Sacred Vedic Ceremony')}
             </Text>
             {activeBooking.attendanceCode && (
-              <Text style={styles.bookingDetails}>
-                Attendance Code: <Text style={styles.codeText}>{String(activeBooking.attendanceCode)}</Text>
-              </Text>
+              <View style={styles.attendanceWrap}>
+                <Text style={styles.bookingDetails}>
+                  Attendance Code: <Text style={styles.codeText}>{String(activeBooking.attendanceCode)}</Text>
+                </Text>
+                <Text style={styles.codeTapNotice}>Tap to view ceremony command center →</Text>
+              </View>
             )}
             <Text style={styles.bookingSubtext}>
               Share this 6-digit verification code with the Acharya upon arrival.
@@ -125,6 +296,16 @@ export const HomeScreen: React.FC = () => {
               <Icon family="material-community" name="fire" size={24} color={colors.primary} />
             </View>
             <Text style={styles.quickActionText}>Book Puja</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionItem}
+            onPress={() => navigation.navigate('PanditsDirectory')}
+          >
+            <View style={[styles.quickActionIcon, { backgroundColor: '#FFFBEB' }]}>
+              <Icon family="material-community" name="account-group" size={24} color={colors.goldAccent} />
+            </View>
+            <Text style={styles.quickActionText}>Acharyas</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -148,7 +329,7 @@ export const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Trending Vedic Pujas from API */}
+        {/* Trending Vedic Pujas from API with Photos */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Trending Sacred Pujas</Text>
           <TouchableOpacity onPress={() => navigation.navigate('PujasTab')}>
@@ -162,7 +343,7 @@ export const HomeScreen: React.FC = () => {
             <PujaCardSkeleton style={styles.serviceCard} />
           </View>
         ) : services && services.length > 0 ? (
-          services.slice(0, 3).map((service: PujaService) => {
+          services.slice(0, 3).map((service: PujaService, idx: number) => {
             const serviceTitle = resolveLocalizedText(service.title, 'Sacred Vedic Vidhi');
             const serviceSubtitle = resolveLocalizedText(
               service.subtitle || service.description,
@@ -170,28 +351,45 @@ export const HomeScreen: React.FC = () => {
             );
             const categoryLabel = resolveLocalizedText(service.category, 'Vedic Vidhi');
             const price = service.priceMinor ? service.priceMinor / 100 : 3500;
+            const imageUrl = service.imageUrl || getPujaImageUrl(service, idx);
 
             return (
               <Card
                 key={service.id}
                 style={styles.serviceCard}
-                onPress={() => navigation.navigate('PujasTab', { screen: 'PujaDetail', params: { serviceId: service.id } })}
+                onPress={() =>
+                  navigation.navigate('PujasTab', {
+                    screen: 'PujaDetail',
+                    params: { serviceId: service.id },
+                  })
+                }
               >
-                <View style={styles.serviceHeader}>
+                {/* Photographic Header */}
+                <View style={styles.serviceImageWrap}>
+                  <Image
+                    source={{ uri: imageUrl }}
+                    style={styles.serviceImage}
+                    resizeMode="cover"
+                  />
                   <View style={styles.serviceCategoryBadge}>
                     <Text style={styles.serviceCategoryText}>{categoryLabel}</Text>
                   </View>
-                  <Text style={styles.servicePrice}>₹{price}</Text>
+                  <View style={styles.servicePriceBadge}>
+                    <Text style={styles.servicePrice}>₹{price}</Text>
+                  </View>
                 </View>
-                <Text style={styles.serviceTitle}>{serviceTitle}</Text>
-                <Text style={styles.serviceSubtitle} numberOfLines={2}>
-                  {serviceSubtitle}
-                </Text>
-                <View style={styles.serviceFooter}>
-                  <Text style={styles.serviceDuration}>~{service.durationMinutes || 120} mins | Authentic Vidhi</Text>
-                  <View style={styles.bookCta}>
-                    <Text style={styles.bookCtaText}>Book Slot</Text>
-                    <Icon family="material" name="chevron-right" size={16} color={colors.primary} />
+
+                <View style={styles.serviceBody}>
+                  <Text style={styles.serviceTitle}>{serviceTitle}</Text>
+                  <Text style={styles.serviceSubtitle} numberOfLines={2}>
+                    {serviceSubtitle}
+                  </Text>
+                  <View style={styles.serviceFooter}>
+                    <Text style={styles.serviceDuration}>~{service.durationMinutes || 120} mins | Authentic Vidhi</Text>
+                    <View style={styles.bookCta}>
+                      <Text style={styles.bookCtaText}>Select Vidhi</Text>
+                      <Icon family="material" name="chevron-right" size={16} color={colors.primary} />
+                    </View>
                   </View>
                 </View>
               </Card>
@@ -260,8 +458,118 @@ const styles = StyleSheet.create({
     padding: spacing.screenPadding,
     paddingBottom: spacing.xxxl,
   },
+  carouselContainer: {
+    marginBottom: spacing.lg,
+  },
+  heroSlide: {
+    width: SCREEN_WIDTH - spacing.screenPadding * 2,
+    height: 180,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: colors.primaryDark,
+  },
+  heroSlideImage: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.85,
+  },
+  heroSlideOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(26, 17, 16, 0.45)',
+    padding: spacing.lg,
+    justifyContent: 'flex-end',
+  },
+  heroSlideTitle: {
+    ...typography.h3,
+    color: colors.white,
+    fontFamily: typography.fontFamilySerif,
+    marginBottom: 4,
+  },
+  heroSlideSubtitle: {
+    ...typography.bodySmall,
+    color: '#FDE68A',
+    marginBottom: spacing.sm,
+    lineHeight: 16,
+  },
+  heroSlideCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.full,
+    gap: 4,
+  },
+  heroSlideCtaText: {
+    ...typography.caption,
+    color: colors.white,
+    fontWeight: '700',
+  },
+  carouselPagination: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: spacing.xs,
+  },
+  paginationDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.borderWarm,
+  },
+  paginationDotActive: {
+    width: 18,
+    backgroundColor: colors.primary,
+  },
+  verticalsSection: {
+    marginBottom: spacing.lg,
+  },
+  verticalsHeader: {
+    ...typography.h4,
+    color: colors.primaryDark,
+    marginBottom: spacing.sm,
+    fontFamily: typography.fontFamilySerif,
+  },
+  verticalsRow: {
+    gap: spacing.sm,
+  },
+  verticalCard: {
+    width: 105,
+    height: 105,
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  verticalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  verticalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    justifyContent: 'flex-end',
+    padding: 6,
+  },
+  verticalText: {
+    ...typography.captionSmall,
+    color: colors.white,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   panchangCard: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   panchangRow: {
     flexDirection: 'row',
@@ -271,19 +579,21 @@ const styles = StyleSheet.create({
   panchangLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
+    flex: 1,
   },
   panchangIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.amberMuted,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEF3C7',
     alignItems: 'center',
     justifyContent: 'center',
   },
   panchangTithi: {
-    ...typography.h4,
-    color: colors.textPrimary,
+    ...typography.bodyMedium,
+    fontWeight: '700',
+    color: colors.primaryDark,
   },
   panchangNakshatra: {
     ...typography.caption,
@@ -291,13 +601,12 @@ const styles = StyleSheet.create({
   },
   panchangDivider: {
     height: 1,
-    backgroundColor: '#FDE68A',
+    backgroundColor: colors.cardBorder,
     marginVertical: spacing.sm,
   },
   muhuratRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   muhuratItem: {
     flexDirection: 'row',
@@ -306,18 +615,18 @@ const styles = StyleSheet.create({
   },
   muhuratText: {
     ...typography.caption,
-    color: colors.textSecondary,
-    fontWeight: '500',
+    color: colors.success,
+    fontWeight: '600',
   },
   muhuratRed: {
     ...typography.caption,
     color: colors.danger,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   activeBookingCard: {
-    backgroundColor: '#FFFDF9',
-    borderColor: colors.goldAccent,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
   },
   bookingHeader: {
     flexDirection: 'row',
@@ -339,93 +648,129 @@ const styles = StyleSheet.create({
   activeBookingTitle: {
     ...typography.caption,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: colors.textMuted,
     textTransform: 'uppercase',
   },
   bookingServiceName: {
     ...typography.h4,
-    color: colors.primary,
-    marginBottom: 4,
+    color: colors.primaryDark,
+    marginBottom: spacing.xs,
+  },
+  attendanceWrap: {
+    backgroundColor: '#FEF2F2',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 6,
   },
   bookingDetails: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginBottom: 2,
+    color: colors.textPrimary,
   },
   codeText: {
-    fontWeight: '700',
-    color: colors.primaryDark,
+    fontWeight: '800',
+    color: colors.primary,
     letterSpacing: 2,
   },
-  bookingSubtext: {
+  codeTapNotice: {
     ...typography.captionSmall,
+    color: colors.primary,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  bookingSubtext: {
+    ...typography.caption,
     color: colors.textMuted,
   },
   quickActionsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: spacing.md,
+    marginBottom: spacing.xl,
+    gap: 8,
   },
   quickActionItem: {
     flex: 1,
     alignItems: 'center',
-    marginHorizontal: 4,
   },
   quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: colors.borderWarm,
+    marginBottom: spacing.xs,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   quickActionText: {
     ...typography.caption,
-    fontWeight: '600',
     color: colors.textPrimary,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     ...typography.h3,
-    color: colors.textPrimary,
+    color: colors.primaryDark,
+    fontFamily: typography.fontFamilySerif,
   },
   viewAllText: {
     ...typography.bodySmall,
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   serviceCard: {
     marginBottom: spacing.md,
+    padding: 0,
+    overflow: 'hidden',
   },
-  serviceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
+  serviceImageWrap: {
+    height: 140,
+    width: '100%',
+    position: 'relative',
+    backgroundColor: '#EAE6E1',
+  },
+  serviceImage: {
+    width: '100%',
+    height: '100%',
   },
   serviceCategoryBadge: {
-    backgroundColor: colors.primaryMuted,
-    paddingVertical: 2,
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     paddingHorizontal: 8,
-    borderRadius: borderRadius.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
   },
   serviceCategoryText: {
     ...typography.captionSmall,
+    fontWeight: '700',
     color: colors.primary,
-    fontWeight: '600',
+  },
+  servicePriceBadge: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: colors.primaryDark,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
   },
   servicePrice: {
-    ...typography.h4,
-    color: colors.primary,
-    fontWeight: '700',
+    ...typography.bodySmall,
+    fontWeight: '800',
+    color: colors.goldAccent,
+  },
+  serviceBody: {
+    padding: spacing.cardPadding,
   },
   serviceTitle: {
     ...typography.h4,
@@ -443,8 +788,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: colors.borderWarm,
-    paddingTop: spacing.xs,
+    borderTopColor: colors.cardBorder,
+    paddingTop: spacing.sm,
   },
   serviceDuration: {
     ...typography.caption,
@@ -457,35 +802,33 @@ const styles = StyleSheet.create({
   },
   bookCtaText: {
     ...typography.caption,
-    color: colors.primary,
     fontWeight: '700',
+    color: colors.primary,
   },
   emptyCard: {
     alignItems: 'center',
     padding: spacing.xl,
-    marginTop: spacing.sm,
   },
   emptyTitle: {
     ...typography.h4,
-    color: colors.textPrimary,
     marginTop: spacing.sm,
+    color: colors.textPrimary,
   },
   emptySubtext: {
-    ...typography.caption,
+    ...typography.bodySmall,
     color: colors.textMuted,
     textAlign: 'center',
-    marginTop: 4,
-    marginBottom: spacing.md,
+    marginVertical: spacing.sm,
   },
   emptyBtn: {
     backgroundColor: colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
   },
   emptyBtnText: {
-    ...typography.caption,
-    color: '#FFFFFF',
+    ...typography.bodySmall,
+    color: colors.white,
     fontWeight: '700',
   },
 });

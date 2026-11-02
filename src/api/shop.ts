@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiFetch, apiFetchList } from './client';
 import { Product } from '../types';
 import { resolveLocalizedText } from '../utils/localization';
+import { getProductImageUrl } from '../constants/images';
 
 export interface CatalogQuery {
   limit?: number;
@@ -39,16 +40,13 @@ export function normalizeProduct(raw: any): Product {
     priceMinor,
     rating: raw.ratingAverage ?? raw.rating ?? 5.0,
     reviewCount: raw.reviewCount ?? 42,
-    imageUrl:
-      raw.imageUrl ||
-      raw.media?.[0]?.url ||
-      'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=600&q=80',
+    imageUrl: getProductImageUrl(raw),
     images:
       Array.isArray(raw.images) && raw.images.length > 0
         ? raw.images
         : Array.isArray(raw.media) && raw.media.length > 0
         ? raw.media.map((m: any) => m.url || m)
-        : ['https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=600&q=80'],
+        : [getProductImageUrl(raw)],
     variants: Array.isArray(raw.variants) ? raw.variants : [],
     inStock: raw.inStock ?? true,
     isPurityCertified: raw.isPurityCertified ?? true,

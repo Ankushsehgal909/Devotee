@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { PujaStackParamList } from '../../types';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -21,11 +21,13 @@ import { Icon } from '../../components/common/Icon';
 import { Skeleton, SkeletonLine, SkeletonCircle } from '../../components/common/Skeleton';
 import { useService } from '../../api/services';
 import { resolveLocalizedText } from '../../utils/localization';
+import { getPujaImageUrl } from '../../constants/images';
 
 type PujaDetailRouteProp = RouteProp<PujaStackParamList, 'PujaDetail'>;
 
 export const PujaDetailScreen: React.FC = () => {
   const route = useRoute<PujaDetailRouteProp>();
+  const navigation = useNavigation<any>();
   const { serviceId } = route.params;
 
   // Real API hook
@@ -119,20 +121,27 @@ export const PujaDetailScreen: React.FC = () => {
       <Header title={serviceTitle} showBack />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Divine Hero Header Banner */}
-        <View style={styles.heroBanner}>
-          <View style={styles.heroBadgeRow}>
-            <Badge label={categoryLabel} variant="gold" />
-            <View style={styles.ratingBadge}>
-              <Icon family="material" name="star" size={14} color={colors.goldAccent} />
-              <Text style={styles.ratingText}>{service.rating || 4.9} ({service.reviewCount || 108} reviews)</Text>
+        {/* Divine Hero Header Banner with Image */}
+        <View style={styles.heroBannerWrap}>
+          <Image
+            source={{ uri: service.imageUrl || getPujaImageUrl(service) }}
+            style={styles.heroBannerImage}
+            resizeMode="cover"
+          />
+          <View style={styles.heroBannerOverlay}>
+            <View style={styles.heroBadgeRow}>
+              <Badge label={categoryLabel} variant="gold" />
+              <View style={styles.ratingBadge}>
+                <Icon family="material" name="star" size={14} color={colors.goldAccent} />
+                <Text style={styles.ratingText}>{service.rating || 4.9} ({service.reviewCount || 108} reviews)</Text>
+              </View>
             </View>
-          </View>
-          <Text style={styles.heroTitle}>{serviceTitle}</Text>
-          <Text style={styles.heroSubtitle}>{serviceSubtitle}</Text>
-          <View style={styles.durationRow}>
-            <Icon family="material" name="schedule" size={14} color="#FDE68A" />
-            <Text style={styles.durationText}>Duration: ~{service.durationMinutes || 120} Minutes (Complete Vidhi)</Text>
+            <Text style={styles.heroTitle}>{serviceTitle}</Text>
+            <Text style={styles.heroSubtitle}>{serviceSubtitle}</Text>
+            <View style={styles.durationRow}>
+              <Icon family="material" name="schedule" size={14} color="#FDE68A" />
+              <Text style={styles.durationText}>Duration: ~{service.durationMinutes || 120} Minutes (Complete Vidhi)</Text>
+            </View>
           </View>
         </View>
 
@@ -231,10 +240,7 @@ export const PujaDetailScreen: React.FC = () => {
         <Button
           title="Select Shubh Muhurat"
           onPress={() => {
-            Alert.alert(
-              'Select Slot',
-              `Proceeding to select auspicious Muhurat slot for ${service.title}.`
-            );
+            navigation.navigate('PujaCheckout', { serviceId: service.id || serviceId });
           }}
           rightIcon={<Icon family="material" name="calendar-today" size={18} color="#FFFFFF" />}
           size="lg"
@@ -262,6 +268,22 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 100,
+  },
+  heroBannerWrap: {
+    width: '100%',
+    minHeight: 220,
+    position: 'relative',
+    backgroundColor: colors.primaryDark,
+  },
+  heroBannerImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    opacity: 0.35,
+  },
+  heroBannerOverlay: {
+    padding: spacing.screenPadding,
+    paddingVertical: spacing.xl,
   },
   heroBanner: {
     backgroundColor: colors.primary,

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -22,6 +23,7 @@ import { FamilyMember } from '../../types';
 import { resolveLocalizedText } from '../../utils/localization';
 
 export const DevoteeDashboardScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const { user, logout } = useAuthStore();
 
   // Real API hooks
@@ -63,25 +65,37 @@ export const DevoteeDashboardScreen: React.FC = () => {
 
             {/* 2x2 Metric Counters (from web dashboard analysis) */}
             <View style={styles.metricsGrid}>
-              <Card style={styles.metricCard}>
+              <Card
+                style={styles.metricCard}
+                onPress={() => navigation.navigate('MyBookings')}
+              >
                 <Icon family="material-community" name="fire" size={22} color={colors.primary} />
                 <Text style={styles.metricVal}>{bookings?.length ?? 0}</Text>
                 <Text style={styles.metricLabel}>Puja Bookings</Text>
               </Card>
 
-              <Card style={styles.metricCard}>
+              <Card
+                style={styles.metricCard}
+                onPress={() => navigation.navigate('OrderHistory')}
+              >
                 <Icon family="material-community" name="package-variant" size={22} color={colors.goldAccent} />
                 <Text style={styles.metricVal}>{orders?.length ?? 0}</Text>
                 <Text style={styles.metricLabel}>Samagri Orders</Text>
               </Card>
 
-              <Card style={styles.metricCard}>
+              <Card
+                style={styles.metricCard}
+                onPress={() => navigation.navigate('OrderHistory')}
+              >
                 <Icon family="material" name="favorite-border" size={22} color={colors.danger} />
                 <Text style={styles.metricVal}>0</Text>
                 <Text style={styles.metricLabel}>Saved Wishlist</Text>
               </Card>
 
-              <Card style={styles.metricCard}>
+              <Card
+                style={styles.metricCard}
+                onPress={() => navigation.navigate('FamilyMembers')}
+              >
                 <Icon family="material" name="group" size={22} color={colors.success} />
                 <Text style={styles.metricVal}>{familyMembers?.length ?? 0}</Text>
                 <Text style={styles.metricLabel}>Family Gotras</Text>
@@ -91,8 +105,13 @@ export const DevoteeDashboardScreen: React.FC = () => {
             {/* Saved Family Sankalp Tree Card */}
             <Card variant="warm" style={styles.familyCard}>
               <View style={styles.familyHeader}>
-                <Icon family="material" name="group" size={18} color={colors.primary} />
-                <Text style={styles.familyTitle}>Registered Family Sankalp Tree</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon family="material" name="group" size={18} color={colors.primary} />
+                  <Text style={styles.familyTitle}>Registered Family Sankalp Tree</Text>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('FamilyMembers')}>
+                  <Text style={styles.manageLink}>+ Manage</Text>
+                </TouchableOpacity>
               </View>
               <Text style={styles.familySubtitle}>
                 These family members are auto-recited during your Vedic ritual Sankalps.
@@ -128,7 +147,10 @@ export const DevoteeDashboardScreen: React.FC = () => {
 
             {/* Portal Nav Actions List */}
             <Card style={styles.actionsCard}>
-              <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
+              <TouchableOpacity
+                style={styles.actionRow}
+                onPress={() => navigation.navigate('PaymentLedger')}
+              >
                 <Icon family="material" name="payment" size={20} color={colors.primary} />
                 <Text style={styles.actionText}>Payment and Refund Ledger</Text>
                 <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
@@ -136,7 +158,10 @@ export const DevoteeDashboardScreen: React.FC = () => {
 
               <View style={styles.divider} />
 
-              <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
+              <TouchableOpacity
+                style={styles.actionRow}
+                onPress={() => navigation.navigate('SupportDesk')}
+              >
                 <Icon family="material" name="chat-bubble-outline" size={20} color={colors.primary} />
                 <Text style={styles.actionText}>Devotee HelpDesk and Chat Support</Text>
                 <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
@@ -144,7 +169,10 @@ export const DevoteeDashboardScreen: React.FC = () => {
 
               <View style={styles.divider} />
 
-              <TouchableOpacity style={styles.actionRow} onPress={() => {}}>
+              <TouchableOpacity
+                style={styles.actionRow}
+                onPress={() => navigation.navigate('ProfileSettings')}
+              >
                 <Icon family="material" name="person-outline" size={20} color={colors.primary} />
                 <Text style={styles.actionText}>Edit Vedic Profile and Addresses</Text>
                 <Icon family="material" name="chevron-right" size={18} color={colors.textMuted} />
@@ -248,13 +276,18 @@ const styles = StyleSheet.create({
   familyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   familyTitle: {
     ...typography.bodyMedium,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  manageLink: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
   },
   familySubtitle: {
     ...typography.captionSmall,

@@ -48,6 +48,7 @@ export type HomeStackParamList = {
   LiveDarshan: undefined;
   FestivalCalendar: undefined;
   PanditsDirectory: undefined;
+  PanditDetail: { panditId: string };
   NotificationCenter: undefined;
   UniversalSearch: undefined;
 };
@@ -61,10 +62,13 @@ export type PujaStackParamList = {
   BookingConfirmation: { bookingId: string };
   MyBookings: undefined;
   BookingDetail: { bookingId: string };
+  PanditChat: { bookingId: string; panditName?: string };
 };
 
 export type StoreStackParamList = {
   StoreHome: undefined;
+  BestSeller: undefined;
+  SacredGifts: undefined;
   ProductListing: { category?: string };
   ProductDetail: { productId: string };
   CartScreen: undefined;
@@ -92,4 +96,6 @@ export type AccountStackParamList = {
   SupportDesk: undefined;
   SavedAddresses: undefined;
   AppSettings: undefined;
+  OrderHistory: undefined;
+  MyBookings: undefined;
 };

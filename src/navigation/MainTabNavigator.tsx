@@ -2,11 +2,11 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types';
-import { HomeScreen } from '../screens/home/HomeScreen';
+import { HomeNavigator } from './HomeNavigator';
 import { PujaNavigator } from './PujaNavigator';
 import { JapamMalaScreen } from '../screens/utilities/JapamMalaScreen';
-import { StoreHomeScreen } from '../screens/store/StoreHomeScreen';
-import { DevoteeDashboardScreen } from '../screens/account/DevoteeDashboardScreen';
+import { StoreNavigator } from './StoreNavigator';
+import { AccountNavigator } from './AccountNavigator';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { Icon } from '../components/common/Icon';
@@ -27,7 +27,7 @@ export const MainTabNavigator: React.FC = () => {
     >
       <Tab.Screen
         name="HomeTab"
-        component={HomeScreen}
+        component={HomeNavigator}
         options={{
           tabBarLabel: 'Darshan',
           tabBarIcon: ({ color, size }) => (
@@ -64,7 +64,7 @@ export const MainTabNavigator: React.FC = () => {
 
       <Tab.Screen
         name="StoreTab"
-        component={StoreHomeScreen}
+        component={StoreNavigator}
         options={{
           tabBarLabel: 'Samagri',
           tabBarIcon: ({ color, size }) => (
@@ -75,7 +75,7 @@ export const MainTabNavigator: React.FC = () => {
 
       <Tab.Screen
         name="AccountTab"
-        component={DevoteeDashboardScreen}
+        component={AccountNavigator}
         options={{
           tabBarLabel: 'Devotee',
           tabBarIcon: ({ color, size }) => (

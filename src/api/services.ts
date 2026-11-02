@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiFetch, apiFetchList } from './client';
 import { PujaService } from '../types';
 import { resolveLocalizedText } from '../utils/localization';
+import { getPujaImageUrl } from '../constants/images';
 
 export interface ServiceQuery {
   limit?: number;
@@ -42,6 +43,7 @@ export function normalizeService(raw: any): PujaService {
     significance,
     category,
     priceMinor,
+    imageUrl: getPujaImageUrl(raw),
     rating: raw.ratingAverage ?? raw.rating ?? 4.9,
     reviewCount: raw.reviewCount ?? 108,
     durationMinutes: raw.durationMinutes || 120,
