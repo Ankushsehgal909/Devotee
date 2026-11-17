@@ -1,31 +1,49 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
-import { Button } from '../../components/common/Button';
 import { Icon } from '../../components/common/Icon';
+import {
+  CommonAppBackgroundScreen,
+  LinearGradient,
+} from '../../components/common';
+import { localImages } from '../../constants/images';
 
-type OnboardingProp = NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>;
+type OnboardingProp = NativeStackNavigationProp<
+  AuthStackParamList,
+  'Onboarding'
+>;
+
+const BUTTON_GRADIENT_COLORS = ['#9E1B32', '#6B0E1E'];
 
 const SLIDES = [
   {
+    image: localImages.welcome1,
     iconName: 'shield-check',
-    title: 'Certified Gurukul Purohits',
+    title: 'Certified Gurukul\nPurohits',
     desc: 'Experienced, verified Acharyas from ancient Vedic traditions for authentic ritual conduct at your doorstep or online.',
   },
   {
+    image: localImages.welcome2,
     iconName: 'star-four-points',
-    title: 'Customized Gotra Sankalp',
+    title: 'Customized\nGotra Sankalp',
     desc: 'Seamless family tree integration that recites household Gotras, Nakshatras and Rashis for sacred divine blessings.',
   },
   {
+    image: localImages.welcome3,
     iconName: 'hand-heart',
-    title: '100% Consecrated Samagri',
+    title: '100% Consecrated\nSamagri',
     desc: 'Purity-certified A2 Gir Cow Ghee, lab-tested Hawan herbs, pure copper and brass items delivered to your altar.',
   },
 ];
@@ -45,121 +63,236 @@ export const OnboardingScreen: React.FC = () => {
   const slide = SLIDES[currentSlide];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+    <CommonAppBackgroundScreen>
+      {/* Top Bar with Skip Link */}
       <View style={styles.topBar}>
         <TouchableOpacity
           onPress={() => navigation.navigate('Login')}
           style={styles.skipBtn}
+          activeOpacity={0.7}
         >
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.iconCircle}>
-          <Icon
-            family="material-community"
-            name={slide.iconName}
-            size={44}
-            color={colors.primary}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Upper Illustration Area with Floating Badge */}
+        <View style={styles.illustrationWrapper}>
+          <Image
+            source={slide.image}
+            style={styles.illustrationImage}
+            resizeMode="contain"
           />
-        </View>
 
-        <Text style={styles.title}>{slide.title}</Text>
-        <Text style={styles.desc}>{slide.desc}</Text>
-
-        <View style={styles.dotsRow}>
-          {SLIDES.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                currentSlide === i ? styles.activeDot : styles.inactiveDot,
-              ]}
+          {/* Floating Icon Badge overlapping bottom of illustration */}
+          {/* <View style={styles.badgeCircle}>
+            <Icon
+              family="material-community"
+              name={slide.iconName}
+              size={28}
+              color="#821427"
             />
-          ))}
+          </View> */}
         </View>
-      </View>
 
+        {/* Text Content */}
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{slide.title}</Text>
+
+          {/* Golden Lotus Divider */}
+          <Image
+            source={localImages.divider}
+            style={styles.lotusDivider}
+            resizeMode="contain"
+          />
+
+          <Text style={styles.desc}>{slide.desc}</Text>
+
+          {/* Pagination Dots */}
+          <View style={styles.dotsRow}>
+            {SLIDES.map((_, i) => (
+              <TouchableOpacity
+                key={i}
+                onPress={() => setCurrentSlide(i)}
+                hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.dot,
+                    currentSlide === i ? styles.activeDot : styles.inactiveDot,
+                  ]}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Bottom Action Button */}
       <View style={styles.bottomBar}>
-        <Button
-          title={currentSlide === SLIDES.length - 1 ? 'Begin Spiritual Journey' : 'Continue'}
+        <TouchableOpacity
+          style={styles.primaryButtonWrap}
           onPress={handleNext}
-          rightIcon={<Icon family="material" name="chevron-right" size={20} color="#FFFFFF" />}
-          size="lg"
-        />
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={BUTTON_GRADIENT_COLORS}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.primaryButtonGradient}
+          >
+            <View style={styles.buttonContent}>
+              <Text style={styles.buttonText}>
+                {currentSlide === SLIDES.length - 1
+                  ? 'Begin Spiritual Journey'
+                  : 'Continue'}
+              </Text>
+              <Icon
+                family="material"
+                name="arrow-forward"
+                size={18}
+                color={colors.white}
+              />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </CommonAppBackgroundScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bgSand,
-  },
   topBar: {
     paddingHorizontal: spacing.screenPadding,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
     alignItems: 'flex-end',
   },
   skipBtn: {
-    padding: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   skipText: {
-    ...typography.bodyMedium,
-    color: colors.textMuted,
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#4A0E18',
+    fontWeight: '700',
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xxl,
+    paddingBottom: 20,
   },
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primaryMuted,
-    borderWidth: 2,
-    borderColor: colors.borderWarm,
+  illustrationWrapper: {
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
+    position: 'relative',
+    marginBottom: 28,
+    marginTop: 8,
+  },
+  illustrationImage: {
+    width: 290,
+    height: 290,
+  },
+  badgeCircle: {
+    position: 'absolute',
+    bottom: -26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#3A1505',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#F2E8DC',
+  },
+  textContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    width: '100%',
   },
   title: {
-    ...typography.h2,
-    color: colors.textPrimary,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4A0E18',
     textAlign: 'center',
-    marginBottom: spacing.md,
+    lineHeight: 30,
+    fontFamily: typography.fontFamilySerif,
+  },
+  lotusDivider: {
+    width: 95,
+    height: 16,
+    marginTop: 8,
+    marginBottom: 12,
   },
   desc: {
-    ...typography.bodyMedium,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: '#665A50',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
+    maxWidth: 310,
   },
   dotsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.xxl,
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 22,
   },
   dot: {
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
   },
   activeDot: {
-    width: 24,
-    backgroundColor: colors.primary,
+    width: 22,
+    backgroundColor: '#821427',
   },
   inactiveDot: {
-    width: 8,
-    backgroundColor: colors.borderWarm,
+    width: 6,
+    backgroundColor: '#D9C4B2',
   },
   bottomBar: {
-    padding: spacing.screenPadding,
+    paddingHorizontal: spacing.screenPadding,
     paddingBottom: spacing.xl,
+    paddingTop: spacing.xs,
+  },
+  primaryButtonWrap: {
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#821427',
+    elevation: 3,
+    shadowColor: '#821427',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  primaryButtonGradient: {
+    height: 50,
+    width: '100%',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  buttonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.white,
   },
 });

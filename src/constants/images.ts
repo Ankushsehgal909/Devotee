@@ -9,6 +9,11 @@ export const localImages = {
   om: require('../assets/OM.png'),
   divider: require('../assets/Divider.png'),
   devider: require('../assets/Divider.png'),
+  commonBackground: require('../assets/CommonBg.png'),
+  commonBg: require('../assets/CommonBg.png'),
+  welcome1: require('../assets/welcome1.png'),
+  welcome2: require('../assets/welcome2.png'),
+  welcome3: require('../assets/welcome3.png'),
 };
 
 export const siteImages = {
