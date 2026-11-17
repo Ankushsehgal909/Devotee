@@ -11,6 +11,7 @@ export const localImages = {
   devider: require('../assets/Divider.png'),
   commonBackground: require('../assets/CommonBg.png'),
   commonBg: require('../assets/CommonBg.png'),
+  splash: require('../assets/Splash.png'),
   welcome1: require('../assets/welcome1.png'),
   welcome2: require('../assets/welcome2.png'),
   welcome3: require('../assets/welcome3.png'),
