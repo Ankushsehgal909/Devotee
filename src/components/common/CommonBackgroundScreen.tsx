@@ -20,7 +20,7 @@ export interface CommonBackgroundScreenProps {
   children: React.ReactNode;
   /** Custom background image source, defaults to loginImage.jpg */
   backgroundImage?: ImageSourcePropType;
-  /** Resize mode for background image. Defaults to 'cover' */
+  /** Resize mode for background image. Defaults to 'stretch' */
   resizeMode?: ImageResizeMode;
   /**
    * Optional color overlay to tint the background image if needed.
@@ -56,7 +56,7 @@ export interface CommonBackgroundScreenProps {
 export const CommonBackgroundScreen: React.FC<CommonBackgroundScreenProps> = ({
   children,
   backgroundImage = localImages.loginBackground,
-  resizeMode = 'cover',
+  resizeMode = 'stretch',
   overlayColor = null,
   overlayOpacity = 1,
   blurRadius,

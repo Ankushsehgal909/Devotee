@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -19,11 +20,19 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Icon } from '../../components/common/Icon';
 import { CommonBackgroundScreen } from '../../components/common';
-import { requestOtpApi, loginWithPasswordApi, normalizeIdentifier } from '../../api/auth';
+import { localImages } from '../../constants/images';
+import {
+  requestOtpApi,
+  loginWithPasswordApi,
+  normalizeIdentifier,
+} from '../../api/auth';
 import { ApiError } from '../../api/client';
 import { useAuthStore } from '../../store/useAuthStore';
 
-type LoginNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
+type LoginNavigationProp = NativeStackNavigationProp<
+  AuthStackParamList,
+  'Login'
+>;
 type LoginMethod = 'phone' | 'password';
 
 export const LoginScreen: React.FC = () => {
@@ -99,7 +108,10 @@ export const LoginScreen: React.FC = () => {
           return;
         } catch (regErr: any) {
           // If already requested or cooldown active, still navigate to VerifyOtp screen
-          if (regErr?.statusCode === 429 || regErr?.message?.toLowerCase().includes('cooldown')) {
+          if (
+            regErr?.statusCode === 429 ||
+            regErr?.message?.toLowerCase().includes('cooldown')
+          ) {
             navigation.navigate('VerifyOtp', {
               otpId: '',
               identifier: formattedPhone,
@@ -109,7 +121,11 @@ export const LoginScreen: React.FC = () => {
             });
             return;
           }
-          setError(regErr?.message || msg || 'Unable to request OTP. Please try again.');
+          setError(
+            regErr?.message ||
+              msg ||
+              'Unable to request OTP. Please try again.',
+          );
           return;
         }
       }
@@ -148,7 +164,8 @@ export const LoginScreen: React.FC = () => {
         throw new Error('Valid login session was not returned.');
       }
     } catch (err: any) {
-      const msg = err?.message || 'Invalid credentials. Please verify your details.';
+      const msg =
+        err?.message || 'Invalid credentials. Please verify your details.';
       const isUnverified =
         err?.statusCode === 403 ||
         msg.includes('not verified') ||
@@ -159,7 +176,8 @@ export const LoginScreen: React.FC = () => {
       if (isUnverified) {
         // Needs OTP verification before sign in
         const purpose: 'register' | 'login' =
-          msg.toLowerCase().includes('register') || msg.toLowerCase().includes('registration')
+          msg.toLowerCase().includes('register') ||
+          msg.toLowerCase().includes('registration')
             ? 'register'
             : 'login';
         const otpChannel = formattedIdentifier.includes('@') ? 'email' : 'sms';
@@ -177,7 +195,9 @@ export const LoginScreen: React.FC = () => {
             purpose,
             channel: otpResult.channel || otpChannel,
             resendAvailableAt: otpResult.resendAvailableAt,
-            phone: formattedIdentifier.includes('@') ? undefined : formattedIdentifier,
+            phone: formattedIdentifier.includes('@')
+              ? undefined
+              : formattedIdentifier,
           });
           return;
         } catch (otpErr: any) {
@@ -187,7 +207,9 @@ export const LoginScreen: React.FC = () => {
             identifier: formattedIdentifier,
             purpose,
             channel: otpChannel,
-            phone: formattedIdentifier.includes('@') ? undefined : formattedIdentifier,
+            phone: formattedIdentifier.includes('@')
+              ? undefined
+              : formattedIdentifier,
           });
           return;
         }
@@ -212,19 +234,25 @@ export const LoginScreen: React.FC = () => {
         >
           {/* Header & Logo Emblem */}
           <View style={styles.headerArea}>
-            <View style={styles.logoBadge}>
-              <Icon family="material-community" name="om" size={34} color={colors.white} />
-            </View>
+            <Image
+              source={localImages.om}
+              style={styles.omLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Devotee Portal</Text>
             <Text style={styles.subtitle}>
-              Sign in to manage your Gotra Sankalps, authentic Puja vidhis, and sacred samagri orders.
+              Sign in to manage your Gotra Sankalps, authentic Puja vidhis, and
+              sacred samagri orders.
             </Text>
           </View>
 
           {/* Authentication Method Tabs */}
           <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[styles.tabButton, method === 'phone' && styles.tabButtonActive]}
+              style={[
+                styles.tabButton,
+                method === 'phone' && styles.tabButtonActive,
+              ]}
               onPress={() => {
                 setMethod('phone');
                 setError('');
@@ -237,13 +265,21 @@ export const LoginScreen: React.FC = () => {
                 size={18}
                 color={method === 'phone' ? colors.primary : colors.textMuted}
               />
-              <Text style={[styles.tabText, method === 'phone' && styles.tabTextActive]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  method === 'phone' && styles.tabTextActive,
+                ]}
+              >
                 Mobile OTP
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.tabButton, method === 'password' && styles.tabButtonActive]}
+              style={[
+                styles.tabButton,
+                method === 'password' && styles.tabButtonActive,
+              ]}
               onPress={() => {
                 setMethod('password');
                 setError('');
@@ -254,9 +290,16 @@ export const LoginScreen: React.FC = () => {
                 family="material"
                 name="lock-outline"
                 size={18}
-                color={method === 'password' ? colors.primary : colors.textMuted}
+                color={
+                  method === 'password' ? colors.primary : colors.textMuted
+                }
               />
-              <Text style={[styles.tabText, method === 'password' && styles.tabTextActive]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  method === 'password' && styles.tabTextActive,
+                ]}
+              >
                 Password
               </Text>
             </TouchableOpacity>
@@ -265,12 +308,18 @@ export const LoginScreen: React.FC = () => {
           {/* Error Banner */}
           {error ? (
             <View style={styles.errorBox}>
-              <Icon family="material" name="error-outline" size={18} color={colors.error} />
+              <Icon
+                family="material"
+                name="error-outline"
+                size={18}
+                color={colors.error}
+              />
               <View style={styles.errorContent}>
                 <Text style={styles.errorText}>{error}</Text>
                 {(error.toLowerCase().includes('verif') ||
                   error.toLowerCase().includes('pending') ||
-                  error.toLowerCase().includes('register')) && (identifier.trim() || phone.trim()) ? (
+                  error.toLowerCase().includes('register')) &&
+                (identifier.trim() || phone.trim()) ? (
                   <TouchableOpacity
                     style={styles.errorActionBtn}
                     onPress={() => {
@@ -289,7 +338,9 @@ export const LoginScreen: React.FC = () => {
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.errorActionText}>Verify with OTP now →</Text>
+                    <Text style={styles.errorActionText}>
+                      Verify with OTP now →
+                    </Text>
                   </TouchableOpacity>
                 ) : null}
               </View>
@@ -306,7 +357,7 @@ export const LoginScreen: React.FC = () => {
                   keyboardType="phone-pad"
                   maxLength={13}
                   value={phone}
-                  onChangeText={(val) => {
+                  onChangeText={val => {
                     setPhone(val);
                     if (error) setError('');
                   }}
@@ -333,7 +384,9 @@ export const LoginScreen: React.FC = () => {
                         family="material"
                         name="textsms"
                         size={14}
-                        color={channel === 'sms' ? colors.white : colors.textMuted}
+                        color={
+                          channel === 'sms' ? colors.white : colors.textMuted
+                        }
                       />
                       <Text
                         style={[
@@ -356,12 +409,17 @@ export const LoginScreen: React.FC = () => {
                         family="material-community"
                         name="whatsapp"
                         size={14}
-                        color={channel === 'whatsapp' ? colors.white : colors.textMuted}
+                        color={
+                          channel === 'whatsapp'
+                            ? colors.white
+                            : colors.textMuted
+                        }
                       />
                       <Text
                         style={[
                           styles.channelPillText,
-                          channel === 'whatsapp' && styles.channelPillTextActive,
+                          channel === 'whatsapp' &&
+                            styles.channelPillTextActive,
                         ]}
                       >
                         WhatsApp
@@ -375,7 +433,12 @@ export const LoginScreen: React.FC = () => {
                   onPress={handlePhoneOtpSubmit}
                   loading={loading}
                   rightIcon={
-                    <Icon family="material" name="arrow-forward" size={18} color={colors.white} />
+                    <Icon
+                      family="material"
+                      name="arrow-forward"
+                      size={18}
+                      color={colors.white}
+                    />
                   }
                   size="lg"
                   style={styles.actionBtn}
@@ -389,12 +452,17 @@ export const LoginScreen: React.FC = () => {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   value={identifier}
-                  onChangeText={(val) => {
+                  onChangeText={val => {
                     setIdentifier(val);
                     if (error) setError('');
                   }}
                   leftIcon={
-                    <Icon family="material" name="alternate-email" size={18} color={colors.primary} />
+                    <Icon
+                      family="material"
+                      name="alternate-email"
+                      size={18}
+                      color={colors.primary}
+                    />
                   }
                 />
 
@@ -403,12 +471,17 @@ export const LoginScreen: React.FC = () => {
                   placeholder="Enter your password"
                   secureTextEntry={!showPassword}
                   value={password}
-                  onChangeText={(val) => {
+                  onChangeText={val => {
                     setPassword(val);
                     if (error) setError('');
                   }}
                   leftIcon={
-                    <Icon family="material" name="lock" size={18} color={colors.primary} />
+                    <Icon
+                      family="material"
+                      name="lock"
+                      size={18}
+                      color={colors.primary}
+                    />
                   }
                   rightIcon={
                     <TouchableOpacity
@@ -439,7 +512,12 @@ export const LoginScreen: React.FC = () => {
                   onPress={handlePasswordLoginSubmit}
                   loading={loading}
                   rightIcon={
-                    <Icon family="material" name="login" size={18} color={colors.white} />
+                    <Icon
+                      family="material"
+                      name="login"
+                      size={18}
+                      color={colors.white}
+                    />
                   }
                   size="lg"
                   style={styles.actionBtn}
@@ -461,7 +539,8 @@ export const LoginScreen: React.FC = () => {
 
           {/* Footer Terms */}
           <Text style={styles.termsText}>
-            By continuing, you agree to VedSarthi Terms of Service and Devotee Privacy Policy.
+            By continuing, you agree to VedSarthi Terms of Service and Devotee
+            Privacy Policy.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -486,6 +565,11 @@ const styles = StyleSheet.create({
   headerArea: {
     alignItems: 'center',
     marginBottom: spacing.xl,
+  },
+  omLogo: {
+    width: 70,
+    height: 70,
+    marginBottom: spacing.md,
   },
   logoBadge: {
     width: 68,
