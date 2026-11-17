@@ -3,6 +3,11 @@
  * Direct parity with VedSarthi web portal assets (apps/web/src/data/site-assets.json).
  */
 
+export const localImages = {
+  loginBackground: require('../assets/LoginBG.png'),
+  loginImage: require('../assets/LoginBG.png'),
+};
+
 export const siteImages = {
   homeAssetsPujaSamagri1:
     'https://vedsarthi-public-media.anurag5713755.workers.dev/site-images/home-assets-puja-samagri-1-e60108247a6da8b1b53c49a63a217aea6a3f46db9650af52634b059116fea89f.webp',
@@ -66,7 +71,8 @@ export const siteImages = {
  * Returns a high-resolution authentic image for a puja service or product.
  */
 export function getPujaImageUrl(service: any, index = 0): string {
-  if (service?.imageUrl && typeof service.imageUrl === 'string') return service.imageUrl;
+  if (service?.imageUrl && typeof service.imageUrl === 'string')
+    return service.imageUrl;
   if (Array.isArray(service?.media) && service.media.length > 0) {
     const item = service.media[0];
     if (typeof item === 'string') return item;
@@ -82,7 +88,8 @@ export function getPujaImageUrl(service: any, index = 0): string {
 }
 
 export function getProductImageUrl(product: any, index = 0): string {
-  if (product?.imageUrl && typeof product.imageUrl === 'string') return product.imageUrl;
+  if (product?.imageUrl && typeof product.imageUrl === 'string')
+    return product.imageUrl;
   if (Array.isArray(product?.media) && product.media.length > 0) {
     const item = product.media[0];
     if (typeof item === 'string') return item;

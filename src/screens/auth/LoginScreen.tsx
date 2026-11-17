@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
@@ -19,6 +18,7 @@ import { typography } from '../../theme/typography';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Icon } from '../../components/common/Icon';
+import { CommonBackgroundScreen } from '../../components/common';
 import { requestOtpApi, loginWithPasswordApi, normalizeIdentifier } from '../../api/auth';
 import { ApiError } from '../../api/client';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -200,7 +200,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+    <CommonBackgroundScreen>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -465,7 +465,7 @@ export const LoginScreen: React.FC = () => {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </CommonBackgroundScreen>
   );
 };
 
