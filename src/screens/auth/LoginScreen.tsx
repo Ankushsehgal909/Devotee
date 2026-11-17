@@ -239,6 +239,11 @@ export const LoginScreen: React.FC = () => {
               style={styles.omLogo}
               resizeMode="contain"
             />
+            <Image
+              source={localImages.divider}
+              style={styles.divider}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Devotee Portal</Text>
             <Text style={styles.subtitle}>
               Sign in to manage your Gotra Sankalps, authentic Puja vidhis, and
@@ -569,7 +574,12 @@ const styles = StyleSheet.create({
   omLogo: {
     width: 70,
     height: 70,
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  divider: {
+    width: 150,
+    height: 24,
+    marginBottom: spacing.sm,
   },
   logoBadge: {
     width: 68,

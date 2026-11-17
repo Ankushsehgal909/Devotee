@@ -7,6 +7,8 @@ export const localImages = {
   loginBackground: require('../assets/LoginBG.png'),
   loginImage: require('../assets/LoginBG.png'),
   om: require('../assets/OM.png'),
+  divider: require('../assets/Divider.png'),
+  devider: require('../assets/Divider.png'),
 };
 
 export const siteImages = {
