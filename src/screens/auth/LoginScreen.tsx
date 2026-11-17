@@ -8,7 +8,8 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
-  Alert,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,10 +17,8 @@ import { AuthStackParamList } from '../../types';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
-import { Button } from '../../components/common/Button';
-import { Input } from '../../components/common/Input';
 import { Icon } from '../../components/common/Icon';
-import { CommonBackgroundScreen } from '../../components/common';
+import { CommonBackgroundScreen, LinearGradient } from '../../components/common';
 import { localImages } from '../../constants/images';
 import {
   requestOtpApi,
@@ -34,6 +33,8 @@ type LoginNavigationProp = NativeStackNavigationProp<
   'Login'
 >;
 type LoginMethod = 'phone' | 'password';
+
+const BUTTON_GRADIENT_COLORS = ['#9E1B32', '#6B0E1E'];
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginNavigationProp>();
@@ -143,7 +144,7 @@ export const LoginScreen: React.FC = () => {
       return;
     }
     if (!password) {
-      setError('Please enter your account password');
+      setError('Please enter your password');
       return;
     }
 
@@ -160,6 +161,7 @@ export const LoginScreen: React.FC = () => {
 
       if (session && (session.tokens?.accessToken || session.accessToken)) {
         await setSession(session);
+        return;
       } else {
         throw new Error('Valid login session was not returned.');
       }
@@ -222,7 +224,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <CommonBackgroundScreen>
+    <CommonBackgroundScreen resizeMode="stretch">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -267,8 +269,8 @@ export const LoginScreen: React.FC = () => {
               <Icon
                 family="material"
                 name="phone-android"
-                size={18}
-                color={method === 'phone' ? colors.primary : colors.textMuted}
+                size={16}
+                color={method === 'phone' ? colors.white : colors.primary}
               />
               <Text
                 style={[
@@ -294,10 +296,8 @@ export const LoginScreen: React.FC = () => {
               <Icon
                 family="material"
                 name="lock-outline"
-                size={18}
-                color={
-                  method === 'password' ? colors.primary : colors.textMuted
-                }
+                size={16}
+                color={method === 'password' ? colors.white : colors.primary}
               />
               <Text
                 style={[
@@ -356,23 +356,55 @@ export const LoginScreen: React.FC = () => {
           <View style={styles.formCard}>
             {method === 'phone' ? (
               <>
-                <Input
-                  label="Devotee Mobile Number"
-                  placeholder="98765 43210"
-                  keyboardType="phone-pad"
-                  maxLength={13}
-                  value={phone}
-                  onChangeText={val => {
-                    setPhone(val);
-                    if (error) setError('');
-                  }}
-                  leftIcon={
-                    <View style={styles.countryCodeWrap}>
-                      <Text style={styles.countryCodeText}>+91</Text>
-                    </View>
-                  }
-                  helperText="A 6-digit verification code will be sent to your device."
-                />
+                {/* Field Label with Leading Icon */}
+                <View style={styles.labelRow}>
+                  <Icon
+                    family="material"
+                    name="phone-android"
+                    size={16}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.fieldLabel}>Devotee Mobile Number</Text>
+                </View>
+
+                {/* Country Code + Phone Input */}
+                <View style={styles.inputBox}>
+                  <View style={styles.countryCodeWrap}>
+                    <Text style={styles.countryCodeText}>+91</Text>
+                    <Icon
+                      family="material"
+                      name="keyboard-arrow-down"
+                      size={18}
+                      color={colors.textPrimary}
+                    />
+                  </View>
+                  <View style={styles.inputDivider} />
+                  <TextInput
+                    style={styles.textInputField}
+                    placeholder="98765 43210"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="phone-pad"
+                    maxLength={13}
+                    value={phone}
+                    onChangeText={val => {
+                      setPhone(val);
+                      if (error) setError('');
+                    }}
+                  />
+                </View>
+
+                {/* Helper info with Icon */}
+                <View style={styles.helperRow}>
+                  <Icon
+                    family="material"
+                    name="info-outline"
+                    size={14}
+                    color={colors.textMuted}
+                  />
+                  <Text style={styles.helperText}>
+                    A 6-digit verification code will be sent to your device.
+                  </Text>
+                </View>
 
                 {/* Delivery Channel Selector */}
                 <View style={styles.channelRow}>
@@ -384,13 +416,14 @@ export const LoginScreen: React.FC = () => {
                         channel === 'sms' && styles.channelPillActive,
                       ]}
                       onPress={() => setChannel('sms')}
+                      activeOpacity={0.8}
                     >
                       <Icon
                         family="material"
                         name="textsms"
                         size={14}
                         color={
-                          channel === 'sms' ? colors.white : colors.textMuted
+                          channel === 'sms' ? colors.white : '#4A2027'
                         }
                       />
                       <Text
@@ -409,15 +442,14 @@ export const LoginScreen: React.FC = () => {
                         channel === 'whatsapp' && styles.channelPillActive,
                       ]}
                       onPress={() => setChannel('whatsapp')}
+                      activeOpacity={0.8}
                     >
                       <Icon
                         family="material-community"
                         name="whatsapp"
                         size={14}
                         color={
-                          channel === 'whatsapp'
-                            ? colors.white
-                            : colors.textMuted
+                          channel === 'whatsapp' ? colors.white : '#4A2027'
                         }
                       />
                       <Text
@@ -433,75 +465,116 @@ export const LoginScreen: React.FC = () => {
                   </View>
                 </View>
 
-                <Button
-                  title="Get Sacred OTP"
+                {/* Primary Button with LinearGradient */}
+                <TouchableOpacity
+                  style={[
+                    styles.primaryButtonWrap,
+                    loading && styles.buttonDisabled,
+                  ]}
                   onPress={handlePhoneOtpSubmit}
-                  loading={loading}
-                  rightIcon={
-                    <Icon
-                      family="material"
-                      name="arrow-forward"
-                      size={18}
-                      color={colors.white}
-                    />
-                  }
-                  size="lg"
-                  style={styles.actionBtn}
-                />
+                  activeOpacity={0.85}
+                  disabled={loading}
+                >
+                  <LinearGradient
+                    colors={BUTTON_GRADIENT_COLORS}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.primaryButtonGradient}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.white} size="small" />
+                    ) : (
+                      <View style={styles.buttonContent}>
+                        <Text style={styles.buttonText}>Get Sacred OTP</Text>
+                        <Icon
+                          family="material"
+                          name="arrow-forward"
+                          size={18}
+                          color={colors.white}
+                        />
+                      </View>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
               </>
             ) : (
               <>
-                <Input
-                  label="Email or Mobile Number"
-                  placeholder="name@example.com or 9876543210"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={identifier}
-                  onChangeText={val => {
-                    setIdentifier(val);
-                    if (error) setError('');
-                  }}
-                  leftIcon={
-                    <Icon
-                      family="material"
-                      name="alternate-email"
-                      size={18}
-                      color={colors.primary}
-                    />
-                  }
-                />
+                {/* Field 1: Email or Mobile */}
+                <View style={styles.labelRow}>
+                  <Icon
+                    family="material"
+                    name="mail-outline"
+                    size={16}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.fieldLabel}>Email or Mobile Number</Text>
+                </View>
 
-                <Input
-                  label="Password"
-                  placeholder="Enter your password"
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={val => {
-                    setPassword(val);
-                    if (error) setError('');
-                  }}
-                  leftIcon={
+                <View style={styles.inputBox}>
+                  <Icon
+                    family="material"
+                    name="alternate-email"
+                    size={18}
+                    color={colors.primary}
+                    style={styles.inputLeftIcon}
+                  />
+                  <TextInput
+                    style={styles.textInputField}
+                    placeholder="name@example.com or 9876543210"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={identifier}
+                    onChangeText={val => {
+                      setIdentifier(val);
+                      if (error) setError('');
+                    }}
+                  />
+                </View>
+
+                {/* Field 2: Password */}
+                <View style={[styles.labelRow, { marginTop: 8 }]}>
+                  <Icon
+                    family="material"
+                    name="lock-outline"
+                    size={16}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.fieldLabel}>Password</Text>
+                </View>
+
+                <View style={styles.inputBox}>
+                  <Icon
+                    family="material"
+                    name="lock"
+                    size={18}
+                    color={colors.primary}
+                    style={styles.inputLeftIcon}
+                  />
+                  <TextInput
+                    style={styles.textInputField}
+                    placeholder="Enter your password"
+                    placeholderTextColor={colors.textMuted}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={val => {
+                      setPassword(val);
+                      if (error) setError('');
+                    }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.inputRightIcon}
+                  >
                     <Icon
-                      family="material"
-                      name="lock"
+                      family="feather"
+                      name={showPassword ? 'eye-off' : 'eye'}
                       size={18}
-                      color={colors.primary}
+                      color={colors.textMuted}
                     />
-                  }
-                  rightIcon={
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Icon
-                        family="feather"
-                        name={showPassword ? 'eye-off' : 'eye'}
-                        size={18}
-                        color={colors.textMuted}
-                      />
-                    </TouchableOpacity>
-                  }
-                />
+                  </TouchableOpacity>
+                </View>
 
                 <View style={styles.forgotRow}>
                   <TouchableOpacity
@@ -512,21 +585,39 @@ export const LoginScreen: React.FC = () => {
                   </TouchableOpacity>
                 </View>
 
-                <Button
-                  title="Sign In with Password"
+                {/* Primary Button with LinearGradient */}
+                <TouchableOpacity
+                  style={[
+                    styles.primaryButtonWrap,
+                    loading && styles.buttonDisabled,
+                  ]}
                   onPress={handlePasswordLoginSubmit}
-                  loading={loading}
-                  rightIcon={
-                    <Icon
-                      family="material"
-                      name="login"
-                      size={18}
-                      color={colors.white}
-                    />
-                  }
-                  size="lg"
-                  style={styles.actionBtn}
-                />
+                  activeOpacity={0.85}
+                  disabled={loading}
+                >
+                  <LinearGradient
+                    colors={BUTTON_GRADIENT_COLORS}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.primaryButtonGradient}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.white} size="small" />
+                    ) : (
+                      <View style={styles.buttonContent}>
+                        <Text style={styles.buttonText}>
+                          Sign In with Password
+                        </Text>
+                        <Icon
+                          family="material"
+                          name="arrow-forward"
+                          size={18}
+                          color={colors.white}
+                        />
+                      </View>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
               </>
             )}
 
@@ -542,10 +633,47 @@ export const LoginScreen: React.FC = () => {
             </View>
           </View>
 
+          {/* Quick Feature Highlights (Target UI Feature Cards) */}
+          <View style={styles.featureCardsRow}>
+            <View style={styles.featureCard}>
+              <Icon
+                family="material"
+                name="shopping-bag"
+                size={22}
+                color={colors.primary}
+              />
+              <Text style={styles.featureTitle}>Puja Samagri</Text>
+              <Text style={styles.featureSubtitle}>(Authentic & Pure)</Text>
+            </View>
+
+            <View style={styles.featureCard}>
+              <Icon
+                family="material-community"
+                name="account-tie"
+                size={22}
+                color={colors.primary}
+              />
+              <Text style={styles.featureTitle}>Book a Pandit</Text>
+              <Text style={styles.featureSubtitle}>(Verified Priests)</Text>
+            </View>
+
+            <View style={styles.featureCard}>
+              <Icon
+                family="material"
+                name="event-available"
+                size={22}
+                color={colors.primary}
+              />
+              <Text style={styles.featureTitle}>Schedule Puja</Text>
+              <Text style={styles.featureSubtitle}>(At Home or Online)</Text>
+            </View>
+          </View>
+
           {/* Footer Terms */}
           <Text style={styles.termsText}>
-            By continuing, you agree to VedSarthi Terms of Service and Devotee
-            Privacy Policy.
+            By continuing, you agree to VedSarthi{' '}
+            <Text style={styles.termsLink}>Terms of Service</Text> and Devotee{' '}
+            <Text style={styles.termsLink}>Privacy Policy</Text>.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -554,68 +682,53 @@ export const LoginScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bgSand,
-  },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: spacing.screenPadding,
-    paddingVertical: spacing.lg,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 28,
     justifyContent: 'center',
     flexGrow: 1,
   },
   headerArea: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: 18,
+    marginTop: 6,
   },
   omLogo: {
-    width: 70,
-    height: 70,
-    marginBottom: spacing.xs,
+    width: 66,
+    height: 66,
+    marginBottom: 4,
   },
   divider: {
-    width: 150,
-    height: 24,
-    marginBottom: spacing.sm,
-  },
-  logoBadge: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-    borderWidth: 2,
-    borderColor: colors.goldAccent,
-    elevation: 4,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    width: 135,
+    height: 22,
+    marginBottom: 8,
   },
   title: {
-    ...typography.h2,
-    color: colors.primaryDark,
-    marginBottom: spacing.xs,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4A0E18',
+    marginBottom: 6,
     fontFamily: typography.fontFamilySerif,
   },
   subtitle: {
-    ...typography.bodyMedium,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: '#685A50',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
     maxWidth: 320,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.cardBorder,
-    borderRadius: 12,
-    padding: 3,
-    marginBottom: spacing.md,
+    backgroundColor: '#F3E8DC',
+    borderRadius: 24,
+    padding: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#EFE5DA',
   },
   tabButton: {
     flex: 1,
@@ -623,24 +736,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    borderRadius: 9,
-    gap: 6,
+    borderRadius: 20,
+    gap: 8,
+    backgroundColor: 'transparent',
   },
   tabButtonActive: {
-    backgroundColor: colors.white,
+    backgroundColor: '#821427',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowColor: '#821427',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   tabText: {
-    ...typography.bodySmall,
+    fontSize: 13,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: '#591724',
   },
   tabTextActive: {
-    color: colors.primary,
+    color: colors.white,
     fontWeight: '700',
   },
   errorBox: {
@@ -676,104 +790,223 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: spacing.cardPadding,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: '#EDE2D4',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowColor: '#3A1505',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2D181C',
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E6DACD',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+    marginBottom: 8,
   },
   countryCodeWrap: {
-    paddingRight: 6,
-    borderRightWidth: 1,
-    borderRightColor: colors.cardBorder,
-    marginRight: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingRight: 8,
   },
   countryCodeText: {
-    ...typography.bodyMedium,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  inputDivider: {
+    width: 1,
+    height: 22,
+    backgroundColor: '#E6DACD',
+    marginRight: 10,
+  },
+  textInputField: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.textPrimary,
+    paddingVertical: 0,
+  },
+  inputLeftIcon: {
+    marginRight: 8,
+  },
+  inputRightIcon: {
+    padding: 4,
+  },
+  helperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+    marginTop: 2,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#786F66',
   },
   channelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
-    marginTop: -4,
+    marginBottom: 18,
   },
   channelLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontWeight: '600',
+    fontSize: 13,
+    color: '#591724',
+    fontWeight: '500',
   },
   channelOptions: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
   },
   channelPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: colors.bgSand,
-    gap: 4,
+    backgroundColor: 'transparent',
+    gap: 6,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: '#D9CCC0',
   },
   channelPillActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#821427',
+    borderColor: '#821427',
   },
   channelPillText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: '#4A2027',
   },
   channelPillTextActive: {
     color: colors.white,
+    fontWeight: '700',
   },
   forgotRow: {
     alignItems: 'flex-end',
-    marginBottom: spacing.md,
-    marginTop: -4,
+    marginBottom: 16,
+    marginTop: 4,
   },
   forgotText: {
-    ...typography.caption,
+    fontSize: 13,
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  actionBtn: {
-    marginTop: spacing.xs,
+  primaryButtonWrap: {
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#821427',
+    elevation: 3,
+    shadowColor: '#821427',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  primaryButtonGradient: {
+    height: 50,
+    width: '100%',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  buttonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   registerWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.lg,
-    paddingTop: spacing.md,
+    marginTop: 18,
+    paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
+    borderTopColor: '#F3E9DF',
     gap: 6,
   },
   registerPrompt: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: '#786F66',
   },
   registerLink: {
-    ...typography.bodySmall,
+    fontSize: 13,
     color: colors.primary,
     fontWeight: '700',
   },
-  termsText: {
-    ...typography.caption,
-    color: colors.textMuted,
+  featureCardsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 18,
+  },
+  featureCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#EDE2D4',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+  },
+  featureTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#2D181C',
+    marginTop: 6,
     textAlign: 'center',
-    marginTop: spacing.lg,
-    lineHeight: 18,
-    paddingHorizontal: spacing.sm,
+  },
+  featureSubtitle: {
+    fontSize: 9,
+    color: '#786F66',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  termsText: {
+    fontSize: 11,
+    color: '#786F66',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 20,
+    lineHeight: 16,
+    paddingHorizontal: 16,
+  },
+  termsLink: {
+    color: colors.primary,
+    fontWeight: '700',
   },
 });
