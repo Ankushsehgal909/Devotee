@@ -2,26 +2,35 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
+  TextInput,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
-import { Button } from '../../components/common/Button';
-import { Input } from '../../components/common/Input';
 import { Icon } from '../../components/common/Icon';
-import { Header } from '../../components/common/Header';
+import {
+  CommonBackgroundScreen,
+  LinearGradient,
+} from '../../components/common';
+import { localImages } from '../../constants/images';
 import { registerCustomerApi, normalizeIdentifier } from '../../api/auth';
 
-type RegisterNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
+type RegisterNavigationProp = NativeStackNavigationProp<
+  AuthStackParamList,
+  'Register'
+>;
+
+const BUTTON_GRADIENT_COLORS = ['#9E1B32', '#6B0E1E'];
 
 export const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<RegisterNavigationProp>();
@@ -92,9 +101,16 @@ export const RegisterScreen: React.FC = () => {
         navigation.navigate('Login');
       }
     } catch (err: any) {
-      const msg = err?.message || 'Registration failed. Please check your details and try again.';
-      if (err?.statusCode === 409 || msg.toLowerCase().includes('already exists')) {
-        setError('An account with this phone or email already exists. Tap below to sign in or verify.');
+      const msg =
+        err?.message ||
+        'Registration failed. Please check your details and try again.';
+      if (
+        err?.statusCode === 409 ||
+        msg.toLowerCase().includes('already exists')
+      ) {
+        setError(
+          'An account with this phone or email already exists. Tap below to sign in or verify.',
+        );
       } else {
         setError(msg);
       }
@@ -104,12 +120,19 @@ export const RegisterScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
-      <Header
-        title="Create Devotee Account"
-        showBack
-        onBackPress={() => navigation.navigate('Login')}
-      />
+    <CommonBackgroundScreen resizeMode="stretch">
+      {/* Top Custom Nav Header */}
+      <View style={styles.navBar}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Login')}
+          style={styles.backBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          activeOpacity={0.7}
+        >
+          <Icon family="material" name="arrow-back" size={22} color="#1E1E24" />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>Create Devotee Account</Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -120,17 +143,31 @@ export const RegisterScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Welcome Intro Section */}
           <View style={styles.introBox}>
-            <Text style={styles.heading}>Welcome to VedSarthi</Text>
+            <View style={styles.titleWrap}>
+              <Text style={styles.heading}>Welcome to VedSarthi</Text>
+              <Image
+                source={localImages.divider}
+                style={styles.lotusDivider}
+                resizeMode="contain"
+              />
+            </View>
             <Text style={styles.subheading}>
-              Register to book authentic Vedic pujas, consult verified Pandits, and receive holy Prasadam at your home.
+              Register to book authentic Vedic pujas, consult verified Pandits,
+              and receive holy Prasadam at your home.
             </Text>
           </View>
 
           {/* Error Banner */}
           {error ? (
             <View style={styles.errorBox}>
-              <Icon family="material" name="error-outline" size={18} color={colors.error} />
+              <Icon
+                family="material"
+                name="error-outline"
+                size={18}
+                color={colors.error}
+              />
               <View style={styles.errorContent}>
                 <Text style={styles.errorText}>{error}</Text>
                 {error.includes('exists') || error.includes('verify') ? (
@@ -139,7 +176,9 @@ export const RegisterScreen: React.FC = () => {
                     onPress={() => navigation.navigate('Login')}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.errorActionText}>Go to Login / Verify →</Text>
+                    <Text style={styles.errorActionText}>
+                      Go to Login / Verify →
+                    </Text>
                   </TouchableOpacity>
                 ) : null}
               </View>
@@ -148,97 +187,179 @@ export const RegisterScreen: React.FC = () => {
 
           {/* Form Card */}
           <View style={styles.formCard}>
-            <Input
-              label="Full Name *"
-              placeholder="e.g. Ramesh Kumar Sharma"
-              value={name}
-              onChangeText={(val) => {
-                setName(val);
-                if (error) setError('');
-              }}
-              leftIcon={<Icon family="material" name="person" size={18} color={colors.primary} />}
-            />
+            {/* Field 1: Full Name */}
+            <View style={styles.labelRow}>
+              <Icon
+                family="material"
+                name="person"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={styles.fieldLabel}>
+                Full Name <Text style={styles.requiredStar}>*</Text>
+              </Text>
+            </View>
+            <View style={styles.inputBox}>
+              <TextInput
+                style={styles.textInputField}
+                placeholder="e.g., Ramesh Kumar Sharma"
+                placeholderTextColor={colors.textMuted}
+                value={name}
+                onChangeText={val => {
+                  setName(val);
+                  if (error) setError('');
+                }}
+              />
+            </View>
 
-            <Input
-              label="Mobile Number *"
-              placeholder="98765 43210"
-              keyboardType="phone-pad"
-              maxLength={10}
-              value={phone}
-              onChangeText={(val) => {
-                setPhone(val);
-                if (error) setError('');
-              }}
-              leftIcon={
-                <View style={styles.countryCodeWrap}>
-                  <Text style={styles.countryCodeText}>+91</Text>
-                </View>
-              }
-              helperText="Verification OTP will be dispatched to this number"
-            />
+            {/* Field 2: Mobile Number */}
+            <View style={[styles.labelRow, { marginTop: 6 }]}>
+              <Icon
+                family="material"
+                name="phone-android"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={styles.fieldLabel}>
+                Mobile Number <Text style={styles.requiredStar}>*</Text>
+              </Text>
+            </View>
+            <View style={styles.inputBox}>
+              <View style={styles.countryCodeWrap}>
+                <Text style={styles.countryCodeText}>+91</Text>
+                <Icon
+                  family="material"
+                  name="keyboard-arrow-down"
+                  size={18}
+                  color={colors.textPrimary}
+                />
+              </View>
+              <View style={styles.inputDivider} />
+              <TextInput
+                style={styles.textInputField}
+                placeholder="98765 43210"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="phone-pad"
+                maxLength={10}
+                value={phone}
+                onChangeText={val => {
+                  setPhone(val);
+                  if (error) setError('');
+                }}
+              />
+            </View>
+            <View style={styles.helperRow}>
+              <Icon
+                family="material"
+                name="info-outline"
+                size={14}
+                color={colors.textMuted}
+              />
+              <Text style={styles.helperText}>
+                Verification OTP will be dispatched to this number.
+              </Text>
+            </View>
 
-            <Input
-              label="Email Address (Optional)"
-              placeholder="ramesh@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(val) => {
-                setEmail(val);
-                if (error) setError('');
-              }}
-              leftIcon={<Icon family="material" name="email" size={18} color={colors.primary} />}
-            />
+            {/* Field 3: Email Address (Optional) */}
+            <View style={styles.labelRow}>
+              <Icon
+                family="material"
+                name="mail-outline"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={styles.fieldLabel}>Email Address (Optional)</Text>
+            </View>
+            <View style={styles.inputBox}>
+              <TextInput
+                style={styles.textInputField}
+                placeholder="ramesh@example.com"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={val => {
+                  setEmail(val);
+                  if (error) setError('');
+                }}
+              />
+            </View>
 
-            <Input
-              label="Password *"
-              placeholder="Minimum 8 characters"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={(val) => {
-                setPassword(val);
-                if (error) setError('');
-              }}
-              leftIcon={<Icon family="material" name="lock" size={18} color={colors.primary} />}
-              rightIcon={
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Icon
-                    family="feather"
-                    name={showPassword ? 'eye-off' : 'eye'}
-                    size={18}
-                    color={colors.textMuted}
-                  />
-                </TouchableOpacity>
-              }
-            />
+            {/* Field 4: Password */}
+            <View style={[styles.labelRow, { marginTop: 6 }]}>
+              <Icon
+                family="material"
+                name="lock-outline"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={styles.fieldLabel}>
+                Password <Text style={styles.requiredStar}>*</Text>
+              </Text>
+            </View>
+            <View style={styles.inputBox}>
+              <TextInput
+                style={styles.textInputField}
+                placeholder="Minimum 8 characters"
+                placeholderTextColor={colors.textMuted}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={val => {
+                  setPassword(val);
+                  if (error) setError('');
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.inputRightIcon}
+              >
+                <Icon
+                  family="feather"
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={18}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
 
-            <Input
-              label="Confirm Password *"
-              placeholder="Re-enter your password"
-              secureTextEntry={!showConfirmPassword}
-              value={confirmPassword}
-              onChangeText={(val) => {
-                setConfirmPassword(val);
-                if (error) setError('');
-              }}
-              leftIcon={<Icon family="material" name="lock-clock" size={18} color={colors.primary} />}
-              rightIcon={
-                <TouchableOpacity
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Icon
-                    family="feather"
-                    name={showConfirmPassword ? 'eye-off' : 'eye'}
-                    size={18}
-                    color={colors.textMuted}
-                  />
-                </TouchableOpacity>
-              }
-            />
+            {/* Field 5: Confirm Password */}
+            <View style={[styles.labelRow, { marginTop: 6 }]}>
+              <Icon
+                family="material-community"
+                name="lock-check"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={styles.fieldLabel}>
+                Confirm Password <Text style={styles.requiredStar}>*</Text>
+              </Text>
+            </View>
+            <View style={styles.inputBox}>
+              <TextInput
+                style={styles.textInputField}
+                placeholder="Re-enter your password"
+                placeholderTextColor={colors.textMuted}
+                secureTextEntry={!showConfirmPassword}
+                value={confirmPassword}
+                onChangeText={val => {
+                  setConfirmPassword(val);
+                  if (error) setError('');
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.inputRightIcon}
+              >
+                <Icon
+                  family="feather"
+                  name={showConfirmPassword ? 'eye-off' : 'eye'}
+                  size={18}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
 
             {/* Terms Agreement Checkbox */}
             <TouchableOpacity
@@ -246,27 +367,68 @@ export const RegisterScreen: React.FC = () => {
               onPress={() => setAgreeTerms(!agreeTerms)}
               activeOpacity={0.7}
             >
-              <View style={[styles.checkbox, agreeTerms && styles.checkboxActive]}>
+              <View
+                style={[
+                  styles.checkbox,
+                  agreeTerms && styles.checkboxActive,
+                ]}
+              >
                 {agreeTerms && (
-                  <Icon family="material" name="check" size={14} color={colors.white} />
+                  <Icon
+                    family="material"
+                    name="check"
+                    size={13}
+                    color={colors.white}
+                  />
                 )}
               </View>
               <Text style={styles.termsLabel}>
-                I agree to the <Text style={styles.termsBold}>Terms of Service</Text> and{' '}
-                <Text style={styles.termsBold}>Privacy Policy</Text> of VedSarthi.
+                I agree to the{' '}
+                <Text style={styles.termsBold}>Terms of Service</Text> and{' '}
+                <Text style={styles.termsBold}>Privacy Policy</Text> of
+                VedSarthi.
               </Text>
             </TouchableOpacity>
 
-            <Button
-              title="Create Account & Verify OTP"
+            {/* Submit Button with LinearGradient */}
+            <TouchableOpacity
+              style={[
+                styles.primaryButtonWrap,
+                loading && styles.buttonDisabled,
+              ]}
               onPress={handleRegister}
-              loading={loading}
-              rightIcon={
-                <Icon family="material" name="arrow-forward" size={18} color={colors.white} />
-              }
-              size="lg"
-              style={styles.submitBtn}
-            />
+              activeOpacity={0.85}
+              disabled={loading}
+            >
+              <LinearGradient
+                colors={BUTTON_GRADIENT_COLORS}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.primaryButtonGradient}
+              >
+                {loading ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <Icon
+                      family="material"
+                      name="person-add"
+                      size={18}
+                      color={colors.white}
+                    />
+                    <Text style={styles.buttonText}>
+                      Create Account & Verify OTP
+                    </Text>
+                    <Icon
+                      family="material"
+                      name="arrow-forward"
+                      size={18}
+                      color={colors.white}
+                    />
+                  </View>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
 
             {/* Login Link */}
             <View style={styles.loginWrap}>
@@ -281,36 +443,63 @@ export const RegisterScreen: React.FC = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </CommonBackgroundScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bgSand,
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    gap: 12,
+  },
+  backBtn: {
+    padding: 4,
+  },
+  navTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E1E24',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: spacing.screenPadding,
-    paddingVertical: spacing.md,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 28,
     flexGrow: 1,
   },
   introBox: {
-    marginBottom: spacing.md,
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  titleWrap: {
+    alignSelf: 'flex-start',
+    alignItems: 'center',
   },
   heading: {
-    ...typography.h3,
-    color: colors.primaryDark,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4A0E18',
     fontFamily: typography.fontFamilySerif,
-    marginBottom: 4,
+    textAlign: 'left',
+  },
+  lotusDivider: {
+    width: 95,
+    height: 16,
+    marginTop: 4,
+    marginBottom: 8,
   },
   subheading: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: '#665A50',
     lineHeight: 18,
+    maxWidth: 270,
+    textAlign: 'left',
   },
   errorBox: {
     flexDirection: 'row',
@@ -345,78 +534,156 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: spacing.cardPadding,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: '#EDE2D4',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowColor: '#3A1505',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2D181C',
+  },
+  requiredStar: {
+    color: '#7E1528',
+    fontWeight: '700',
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E6DACD',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 46,
+    marginBottom: 8,
   },
   countryCodeWrap: {
-    paddingRight: 6,
-    borderRightWidth: 1,
-    borderRightColor: colors.cardBorder,
-    marginRight: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingRight: 8,
   },
   countryCodeText: {
-    ...typography.bodyMedium,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
   },
+  inputDivider: {
+    width: 1,
+    height: 22,
+    backgroundColor: '#E6DACD',
+    marginRight: 10,
+  },
+  textInputField: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.textPrimary,
+    paddingVertical: 0,
+  },
+  inputRightIcon: {
+    padding: 4,
+  },
+  helperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+    marginTop: -2,
+  },
+  helperText: {
+    fontSize: 11,
+    color: '#786F66',
+  },
   termsRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginVertical: spacing.sm,
-    gap: 10,
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 18,
   },
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 4,
+    borderRadius: 5,
     borderWidth: 1.5,
-    borderColor: colors.borderDefault,
+    borderColor: '#7E1528',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
-    marginTop: 2,
+    marginRight: 10,
   },
   checkboxActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#7E1528',
+    borderColor: '#7E1528',
   },
   termsLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
     flex: 1,
-    lineHeight: 18,
+    fontSize: 12,
+    color: '#3E3A36',
+    lineHeight: 17,
   },
   termsBold: {
-    color: colors.primary,
     fontWeight: '700',
+    color: '#7E1528',
   },
-  submitBtn: {
-    marginTop: spacing.md,
+  primaryButtonWrap: {
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#821427',
+    elevation: 3,
+    shadowColor: '#821427',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  primaryButtonGradient: {
+    height: 50,
+    width: '100%',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   loginWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.lg,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
+    marginTop: 16,
     gap: 6,
   },
   loginPrompt: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: '#786F66',
   },
   loginLink: {
-    ...typography.bodySmall,
-    color: colors.primary,
+    fontSize: 13,
     fontWeight: '700',
+    color: '#7E1528',
   },
 });
