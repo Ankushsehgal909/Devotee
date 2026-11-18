@@ -31,7 +31,12 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Darshan',
           tabBarIcon: ({ color, size }) => (
-            <Icon family="material" name="home" size={size || 24} color={color} />
+            <Icon
+              family="material"
+              name="home"
+              size={size || 24}
+              color={color}
+            />
           ),
         }}
       />
@@ -42,7 +47,12 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Pujas',
           tabBarIcon: ({ color, size }) => (
-            <Icon family="material-community" name="fire" size={size || 24} color={color} />
+            <Icon
+              family="material-community"
+              name="fire"
+              size={size || 24}
+              color={color}
+            />
           ),
         }}
       />
@@ -55,7 +65,12 @@ export const MainTabNavigator: React.FC = () => {
           tabBarLabel: 'Japam',
           tabBarIcon: () => (
             <View style={styles.centralTabAction}>
-              <Icon family="material-community" name="om" size={26} color="#FFFFFF" />
+              <Icon
+                family="material-community"
+                name="om"
+                size={26}
+                color="#FFFFFF"
+              />
             </View>
           ),
           tabBarLabelStyle: styles.centralLabel,
@@ -68,7 +83,12 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Samagri',
           tabBarIcon: ({ color, size }) => (
-            <Icon family="material-community" name="shopping-outline" size={size || 24} color={color} />
+            <Icon
+              family="material-community"
+              name="shopping-outline"
+              size={size || 24}
+              color={color}
+            />
           ),
         }}
       />
@@ -79,7 +99,12 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Devotee',
           tabBarIcon: ({ color, size }) => (
-            <Icon family="material" name="person" size={size || 24} color={color} />
+            <Icon
+              family="material"
+              name="person"
+              size={size || 24}
+              color={color}
+            />
           ),
         }}
       />
