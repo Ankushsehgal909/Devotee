@@ -5,6 +5,7 @@ import { MainTabParamList } from '../types';
 import { HomeNavigator } from './HomeNavigator';
 import { PujaNavigator } from './PujaNavigator';
 import { JapamMalaScreen } from '../screens/utilities/JapamMalaScreen';
+import { PanditNavigator } from './PanditNavigator';
 import { StoreNavigator } from './StoreNavigator';
 import { AccountNavigator } from './AccountNavigator';
 import { colors } from '../theme/colors';
@@ -57,8 +58,8 @@ export const MainTabNavigator: React.FC = () => {
         }}
       />
 
-      {/* Central Elevated Sacred Action (Japam Mala 108 Beads) */}
-      <Tab.Screen
+      {/* Central Elevated Sacred Action (Japam Mala 108 Beads) - commented out as requested */}
+      {/* <Tab.Screen
         name="MalaTab"
         component={JapamMalaScreen}
         options={{
@@ -68,6 +69,26 @@ export const MainTabNavigator: React.FC = () => {
               <Icon
                 family="material-community"
                 name="om"
+                size={26}
+                color="#FFFFFF"
+              />
+            </View>
+          ),
+          tabBarLabelStyle: styles.centralLabel,
+        }}
+      /> */}
+
+      {/* Central Pandits Tab (Gurukul Acharyas & Pandits Directory) */}
+      <Tab.Screen
+        name="PanditsTab"
+        component={PanditNavigator}
+        options={{
+          tabBarLabel: 'Pandits',
+          tabBarIcon: () => (
+            <View style={styles.centralTabAction}>
+              <Icon
+                family="material-community"
+                name="account-group"
                 size={26}
                 color="#FFFFFF"
               />

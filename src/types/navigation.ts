@@ -37,7 +37,8 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   HomeTab: undefined;
   PujasTab: undefined;
-  MalaTab: undefined;
+  MalaTab?: undefined;
+  PanditsTab: undefined;
   StoreTab: undefined;
   AccountTab: undefined;
 };

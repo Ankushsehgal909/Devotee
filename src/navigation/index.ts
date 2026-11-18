@@ -5,4 +5,5 @@ export * from './HomeNavigator';
 export * from './PujaNavigator';
 export * from './StoreNavigator';
 export * from './AccountNavigator';
+export * from './PanditNavigator';
 

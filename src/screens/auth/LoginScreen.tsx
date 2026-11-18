@@ -18,7 +18,10 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Icon } from '../../components/common/Icon';
-import { CommonBackgroundScreen, LinearGradient } from '../../components/common';
+import {
+  CommonBackgroundScreen,
+  LinearGradient,
+} from '../../components/common';
 import { localImages } from '../../constants/images';
 import {
   requestOtpApi,
@@ -278,7 +281,7 @@ export const LoginScreen: React.FC = () => {
                   method === 'phone' && styles.tabTextActive,
                 ]}
               >
-                Mobile OTP
+                Mobile
               </Text>
             </TouchableOpacity>
 
@@ -295,7 +298,7 @@ export const LoginScreen: React.FC = () => {
             >
               <Icon
                 family="material"
-                name="lock-outline"
+                name="mail-outline"
                 size={16}
                 color={method === 'password' ? colors.white : colors.primary}
               />
@@ -305,7 +308,7 @@ export const LoginScreen: React.FC = () => {
                   method === 'password' && styles.tabTextActive,
                 ]}
               >
-                Password
+                Email
               </Text>
             </TouchableOpacity>
           </View>
@@ -422,9 +425,7 @@ export const LoginScreen: React.FC = () => {
                         family="material"
                         name="textsms"
                         size={14}
-                        color={
-                          channel === 'sms' ? colors.white : '#4A2027'
-                        }
+                        color={channel === 'sms' ? colors.white : '#4A2027'}
                       />
                       <Text
                         style={[
@@ -634,7 +635,7 @@ export const LoginScreen: React.FC = () => {
           </View>
 
           {/* Quick Feature Highlights (Target UI Feature Cards) */}
-          <View style={styles.featureCardsRow}>
+          {/* <View style={styles.featureCardsRow}>
             <View style={styles.featureCard}>
               <Icon
                 family="material"
@@ -667,7 +668,7 @@ export const LoginScreen: React.FC = () => {
               <Text style={styles.featureTitle}>Schedule Puja</Text>
               <Text style={styles.featureSubtitle}>(At Home or Online)</Text>
             </View>
-          </View>
+          </View> */}
 
           {/* Footer Terms */}
           <Text style={styles.termsText}>
