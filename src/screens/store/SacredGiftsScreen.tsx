@@ -227,14 +227,14 @@ export const SacredGiftsScreen: React.FC = () => {
           <View style={styles.inputsGrid}>
             <TextInput
               style={styles.inputField}
-              placeholder="Recipient Name (e.g. Anand & Sunita Sharma)"
+              placeholder="Enter recipient name"
               placeholderTextColor={colors.textMuted}
               value={recipientName}
               onChangeText={setRecipientName}
             />
             <TextInput
               style={styles.inputField}
-              placeholder="Sender / Family Name (e.g. Ramesh Sharma)"
+              placeholder="Enter sender name"
               placeholderTextColor={colors.textMuted}
               value={senderName}
               onChangeText={setSenderName}
@@ -243,7 +243,7 @@ export const SacredGiftsScreen: React.FC = () => {
 
           <TextInput
             style={[styles.inputField, { minHeight: 60, textAlignVertical: 'top' }]}
-            placeholder="Personal spiritual blessing message..."
+            placeholder="Enter blessing message"
             placeholderTextColor={colors.textMuted}
             value={blessingMessage}
             onChangeText={setBlessingMessage}
@@ -332,21 +332,21 @@ export const SacredGiftsScreen: React.FC = () => {
 
               <TextInput
                 style={styles.modalInput}
-                placeholder="Company / Family Occasion Name"
+                placeholder="Enter occasion or organization name"
                 placeholderTextColor={colors.textMuted}
                 value={orgName}
                 onChangeText={setOrgName}
               />
               <TextInput
                 style={styles.modalInput}
-                placeholder="Contact Person Full Name"
+                placeholder="Enter contact person name"
                 placeholderTextColor={colors.textMuted}
                 value={contactName}
                 onChangeText={setContactName}
               />
               <TextInput
                 style={styles.modalInput}
-                placeholder="Mobile Number for Quotation"
+                placeholder="Enter mobile number"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
                 value={contactPhone}
@@ -354,7 +354,7 @@ export const SacredGiftsScreen: React.FC = () => {
               />
               <TextInput
                 style={styles.modalInput}
-                placeholder="Estimated Quantity (e.g. 50, 100, 500+)"
+                placeholder="Enter quantity"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="number-pad"
                 value={quantity}

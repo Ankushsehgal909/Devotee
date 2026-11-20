@@ -77,7 +77,7 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <Input
           label="Full Devotee Name"
-          placeholder="Suraj Sharma"
+          placeholder="Enter name"
           value={name}
           onChangeText={(v) => {
             setName(v);
@@ -88,7 +88,7 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <Input
           label="Devotee Gotra"
-          placeholder="Kashyap, Bharadwaja"
+          placeholder="Enter gotra"
           value={gotra}
           onChangeText={setGotra}
           helperText="Select or type your ancestral Vedic Gotra"

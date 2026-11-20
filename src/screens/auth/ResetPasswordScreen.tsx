@@ -116,7 +116,7 @@ export const ResetPasswordScreen: React.FC = () => {
           <View style={styles.formCard}>
             <Input
               label="New Password"
-              placeholder="Minimum 8 characters"
+              placeholder="Enter new password"
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={(val) => {
@@ -141,7 +141,7 @@ export const ResetPasswordScreen: React.FC = () => {
 
             <Input
               label="Confirm New Password"
-              placeholder="Re-enter new password"
+              placeholder="Confirm new password"
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
               onChangeText={(val) => {

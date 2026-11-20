@@ -312,7 +312,7 @@ export const SupportDeskScreen: React.FC = () => {
               <Text style={styles.inputLabel}>Subject / Title</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="e.g. Reschedule Rudrabhishek Ceremony"
+                placeholder="Enter subject"
                 placeholderTextColor={colors.textMuted}
                 value={title}
                 onChangeText={setTitle}
@@ -321,7 +321,7 @@ export const SupportDeskScreen: React.FC = () => {
               <Text style={styles.inputLabel}>Detailed Description</Text>
               <TextInput
                 style={[styles.modalInput, { minHeight: 90, textAlignVertical: 'top' }]}
-                placeholder="Please describe your query with any booking or order reference..."
+                placeholder="Enter description"
                 placeholderTextColor={colors.textMuted}
                 value={message}
                 onChangeText={setMessage}

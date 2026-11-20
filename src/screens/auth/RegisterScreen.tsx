@@ -202,7 +202,7 @@ export const RegisterScreen: React.FC = () => {
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.textInputField}
-                placeholder="e.g., Ramesh Kumar Sharma"
+                placeholder="Enter name"
                 placeholderTextColor={colors.textMuted}
                 value={name}
                 onChangeText={val => {
@@ -237,7 +237,7 @@ export const RegisterScreen: React.FC = () => {
               <View style={styles.inputDivider} />
               <TextInput
                 style={styles.textInputField}
-                placeholder="98765 43210"
+                placeholder="Enter mobile number"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
                 maxLength={10}
@@ -273,7 +273,7 @@ export const RegisterScreen: React.FC = () => {
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.textInputField}
-                placeholder="ramesh@example.com"
+                placeholder="Enter email"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -300,7 +300,7 @@ export const RegisterScreen: React.FC = () => {
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.textInputField}
-                placeholder="Minimum 8 characters"
+                placeholder="Enter password"
                 placeholderTextColor={colors.textMuted}
                 secureTextEntry={!showPassword}
                 value={password}
@@ -338,7 +338,7 @@ export const RegisterScreen: React.FC = () => {
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.textInputField}
-                placeholder="Re-enter your password"
+                placeholder="Confirm password"
                 placeholderTextColor={colors.textMuted}
                 secureTextEntry={!showConfirmPassword}
                 value={confirmPassword}

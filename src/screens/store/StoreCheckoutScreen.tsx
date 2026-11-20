@@ -335,33 +335,33 @@ export const StoreCheckoutScreen: React.FC = () => {
             <ScrollView showsVerticalScrollIndicator={false}>
               <TextInput
                 style={styles.modalInput}
-                placeholder="Recipient Full Name"
+                placeholder="Enter name"
                 value={newRecipientName}
                 onChangeText={setNewRecipientName}
               />
               <TextInput
                 style={styles.modalInput}
-                placeholder="Phone Number (10 digits)"
+                placeholder="Enter mobile number"
                 keyboardType="phone-pad"
                 value={newPhone}
                 onChangeText={setNewPhone}
               />
               <TextInput
                 style={styles.modalInput}
-                placeholder="House / Flat / Street Name"
+                placeholder="Enter address"
                 value={newStreet}
                 onChangeText={setNewStreet}
               />
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <TextInput
                   style={[styles.modalInput, { flex: 1 }]}
-                  placeholder="City"
+                  placeholder="Enter city"
                   value={newCity}
                   onChangeText={setNewCity}
                 />
                 <TextInput
                   style={[styles.modalInput, { flex: 1 }]}
-                  placeholder="Pincode"
+                  placeholder="Enter pincode"
                   keyboardType="number-pad"
                   value={newPincode}
                   onChangeText={setNewPincode}
@@ -369,7 +369,7 @@ export const StoreCheckoutScreen: React.FC = () => {
               </View>
               <TextInput
                 style={styles.modalInput}
-                placeholder="State (e.g. Uttar Pradesh, Maharashtra)"
+                placeholder="Enter state"
                 value={newState}
                 onChangeText={setNewState}
               />

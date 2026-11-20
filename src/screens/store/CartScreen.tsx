@@ -205,7 +205,7 @@ export const CartScreen: React.FC = () => {
             <View style={styles.giftInputBox}>
               <TextInput
                 style={styles.giftTextInput}
-                placeholder="Enter personal blessing note (e.g. For peace & prosperity in the new home)"
+                placeholder="Enter personal blessing note"
                 placeholderTextColor={colors.textMuted}
                 value={giftNote}
                 onChangeText={(txt) => {
@@ -224,7 +224,7 @@ export const CartScreen: React.FC = () => {
           <View style={styles.promoRow}>
             <TextInput
               style={styles.promoInput}
-              placeholder="Enter VEDIC10 or SHUBH10"
+              placeholder="Enter coupon code"
               placeholderTextColor={colors.textMuted}
               value={promoInput}
               onChangeText={setPromoInput}

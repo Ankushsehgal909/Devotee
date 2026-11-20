@@ -300,7 +300,7 @@ export const FamilyMembersScreen: React.FC = () => {
               <Text style={styles.inputLabel}>Full Name</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Ramesh Chandra Sharma"
+                placeholder="Enter name"
                 placeholderTextColor={colors.textMuted}
                 value={name}
                 onChangeText={setName}
@@ -324,7 +324,7 @@ export const FamilyMembersScreen: React.FC = () => {
               <Text style={styles.inputLabel}>Gotra</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Kashyap, Bharadwaj, Vashishta"
+                placeholder="Enter gotra"
                 placeholderTextColor={colors.textMuted}
                 value={gotra}
                 onChangeText={setGotra}

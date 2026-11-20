@@ -384,7 +384,7 @@ export const LoginScreen: React.FC = () => {
                   <View style={styles.inputDivider} />
                   <TextInput
                     style={styles.textInputField}
-                    placeholder="98765 43210"
+                    placeholder="Enter mobile number"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="phone-pad"
                     maxLength={13}
@@ -521,7 +521,7 @@ export const LoginScreen: React.FC = () => {
                   />
                   <TextInput
                     style={styles.textInputField}
-                    placeholder="name@example.com or 9876543210"
+                    placeholder="Enter email or mobile number"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -554,7 +554,7 @@ export const LoginScreen: React.FC = () => {
                   />
                   <TextInput
                     style={styles.textInputField}
-                    placeholder="Enter your password"
+                    placeholder="Enter password"
                     placeholderTextColor={colors.textMuted}
                     secureTextEntry={!showPassword}
                     value={password}

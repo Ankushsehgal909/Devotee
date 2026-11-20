@@ -236,7 +236,7 @@ export const PujaCheckoutScreen: React.FC = () => {
               <Card variant="warm" style={styles.formCard}>
                 <Text style={styles.formLabel}>Street Address / Society Name *</Text>
                 <TextInput
-                  placeholder="e.g. Flat 402, Shivalik Heights, Sector 62"
+                  placeholder="Enter street address"
                   value={street}
                   onChangeText={setStreet}
                   style={styles.textInput}
@@ -246,6 +246,7 @@ export const PujaCheckoutScreen: React.FC = () => {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.formLabel}>City *</Text>
                     <TextInput
+                      placeholder="Enter city"
                       value={city}
                       onChangeText={setCity}
                       style={styles.textInput}
@@ -254,6 +255,7 @@ export const PujaCheckoutScreen: React.FC = () => {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.formLabel}>Pincode *</Text>
                     <TextInput
+                      placeholder="Enter pincode"
                       value={pincode}
                       onChangeText={setPincode}
                       keyboardType="number-pad"
@@ -333,7 +335,7 @@ export const PujaCheckoutScreen: React.FC = () => {
 
             <Text style={styles.formLabel}>Special Shastric Notes or Specific Deity Requests (Optional)</Text>
             <TextInput
-              placeholder="e.g. Please perform extra Rudrabhishek with Bilva leaves..."
+              placeholder="Enter special instructions or notes"
               value={specialNotes}
               onChangeText={setSpecialNotes}
               multiline

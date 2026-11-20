@@ -101,7 +101,7 @@ export const ProfileSettingsScreen: React.FC = () => {
           <Text style={styles.fieldLabel}>Full Name</Text>
           <TextInput
             style={styles.input}
-            placeholder="Devotee Name"
+            placeholder="Enter name"
             placeholderTextColor={colors.textMuted}
             value={name}
             onChangeText={setName}
@@ -110,7 +110,7 @@ export const ProfileSettingsScreen: React.FC = () => {
           <Text style={styles.fieldLabel}>Devotee Gotra (Lineage)</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. Kashyap, Bharadwaj, Sandilya"
+            placeholder="Enter gotra"
             placeholderTextColor={colors.textMuted}
             value={gotra}
             onChangeText={setGotra}
@@ -122,7 +122,7 @@ export const ProfileSettingsScreen: React.FC = () => {
           <Text style={styles.fieldLabel}>Email Address (For Tax Invoices & Muhurats)</Text>
           <TextInput
             style={styles.input}
-            placeholder="devotee@example.com"
+            placeholder="Enter email"
             placeholderTextColor={colors.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"

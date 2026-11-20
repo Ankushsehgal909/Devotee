@@ -192,7 +192,7 @@ export const SavedAddressesScreen: React.FC = () => {
               <Text style={styles.inputLabel}>Recipient / Karta Name</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="Full Name"
+                placeholder="Enter name"
                 placeholderTextColor={colors.textMuted}
                 value={name}
                 onChangeText={setName}
@@ -201,7 +201,7 @@ export const SavedAddressesScreen: React.FC = () => {
               <Text style={styles.inputLabel}>Contact Phone</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="10-digit Mobile Number"
+                placeholder="Enter mobile number"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
                 value={phone}
@@ -211,7 +211,7 @@ export const SavedAddressesScreen: React.FC = () => {
               <Text style={styles.inputLabel}>House / Street / Colony</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="Flat / House No., Landmark, Street"
+                placeholder="Enter address"
                 placeholderTextColor={colors.textMuted}
                 value={street}
                 onChangeText={setStreet}
@@ -222,7 +222,7 @@ export const SavedAddressesScreen: React.FC = () => {
                   <Text style={styles.inputLabel}>City</Text>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="City"
+                    placeholder="Enter city"
                     placeholderTextColor={colors.textMuted}
                     value={city}
                     onChangeText={setCity}
@@ -232,7 +232,7 @@ export const SavedAddressesScreen: React.FC = () => {
                   <Text style={styles.inputLabel}>Pincode</Text>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="Pincode"
+                    placeholder="Enter pincode"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="number-pad"
                     value={pincode}
@@ -244,7 +244,7 @@ export const SavedAddressesScreen: React.FC = () => {
               <Text style={styles.inputLabel}>State</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="State"
+                placeholder="Enter state"
                 placeholderTextColor={colors.textMuted}
                 value={state}
                 onChangeText={setState}
