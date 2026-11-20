@@ -34,13 +34,20 @@ export type AuthStackParamList = {
   ProfileSetup: { phone: string };
 };
 
+export type PanditStackParamList = {
+  PanditsDirectory: undefined;
+  PanditDetail: { panditId: string };
+  PujaDetail: { serviceId: string };
+  PujaCheckout: { serviceId: string };
+};
+
 export type MainTabParamList = {
-  HomeTab: undefined;
-  PujasTab: undefined;
+  HomeTab: NavigatorScreenParams<HomeStackParamList> | undefined;
+  PujasTab: NavigatorScreenParams<PujaStackParamList> | undefined;
   MalaTab?: undefined;
-  PanditsTab: undefined;
-  StoreTab: undefined;
-  AccountTab: undefined;
+  PanditsTab: NavigatorScreenParams<PanditStackParamList> | undefined;
+  StoreTab: NavigatorScreenParams<StoreStackParamList> | undefined;
+  AccountTab: NavigatorScreenParams<AccountStackParamList> | undefined;
 };
 
 export type HomeStackParamList = {
@@ -50,6 +57,9 @@ export type HomeStackParamList = {
   FestivalCalendar: undefined;
   PanditsDirectory: undefined;
   PanditDetail: { panditId: string };
+  PujaDetail: { serviceId: string };
+  PujaCheckout: { serviceId: string };
+  BookingDetail: { bookingId: string };
   NotificationCenter: undefined;
   UniversalSearch: undefined;
 };

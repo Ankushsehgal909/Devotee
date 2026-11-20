@@ -144,9 +144,8 @@ export const PanditDetailScreen: React.FC = () => {
               style={styles.pujaItem}
               activeOpacity={0.8}
               onPress={() => {
-                navigation.navigate('PujasTab', {
-                  screen: 'PujaDetail',
-                  params: { serviceId: service.id },
+                navigation.navigate('PujaDetail', {
+                  serviceId: service.id,
                 });
               }}
             >
@@ -173,12 +172,11 @@ export const PanditDetailScreen: React.FC = () => {
           style={styles.bookBtn}
           onPress={() => {
             if (samplePujas.length > 0) {
-              navigation.navigate('PujasTab', {
-                screen: 'PujaCheckout',
-                params: { serviceId: samplePujas[0].id },
+              navigation.navigate('PujaCheckout', {
+                serviceId: samplePujas[0].id,
               });
             } else {
-              navigation.navigate('PujasTab', { screen: 'PujaCatalog' });
+              navigation.navigate('PujasTab');
             }
           }}
           leftIcon={<Icon family="material-community" name="fire" size={18} color="#FFFFFF" />}

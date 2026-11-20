@@ -304,9 +304,8 @@ export const HomeScreen: React.FC = () => {
                     key={service.id}
                     style={styles.occasionCard}
                     onPress={() =>
-                      navigation.navigate('PujasTab', {
-                        screen: 'PujaDetail',
-                        params: { serviceId: service.id },
+                      navigation.navigate('PujaDetail', {
+                        serviceId: service.id,
                       })
                     }
                     activeOpacity={0.88}
@@ -333,9 +332,8 @@ export const HomeScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.activeBookingCard}
             onPress={() =>
-              navigation.navigate('PujasTab', {
-                screen: 'BookingDetail',
-                params: { bookingId: activeBooking.id },
+              navigation.navigate('BookingDetail', {
+                bookingId: activeBooking.id,
               })
             }
             activeOpacity={0.88}
@@ -548,9 +546,8 @@ export const HomeScreen: React.FC = () => {
                     key={service.id}
                     style={styles.popularCard}
                     onPress={() =>
-                      navigation.navigate('PujasTab', {
-                        screen: 'PujaDetail',
-                        params: { serviceId: service.id },
+                      navigation.navigate('PujaDetail', {
+                        serviceId: service.id,
                       })
                     }
                     activeOpacity={0.88}

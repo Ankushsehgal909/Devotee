@@ -67,6 +67,14 @@ export const PujaDetailScreen: React.FC = () => {
   const { data: service, isLoading } = useService(serviceId);
   const [selectedMode, setSelectedMode] = useState<string>('home_visit');
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('PujasTab', { screen: 'PujaCatalog' });
+    }
+  };
+
   if (isLoading || !service) {
     return (
       <CommonAppBackgroundScreen
@@ -76,7 +84,7 @@ export const PujaDetailScreen: React.FC = () => {
         <View style={styles.topHeader}>
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
             style={styles.backBtn}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
@@ -196,7 +204,7 @@ export const PujaDetailScreen: React.FC = () => {
       <View style={styles.topHeader}>
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => navigation.goBack()}
+          onPress={handleBack}
           style={styles.backBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >

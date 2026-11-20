@@ -29,6 +29,13 @@ export const MainTabNavigator: React.FC = () => {
       <Tab.Screen
         name="HomeTab"
         component={HomeNavigator}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('HomeTab', {
+              screen: 'HomeScreen',
+            });
+          },
+        })}
         options={{
           tabBarLabel: 'Darshan',
           tabBarIcon: ({ color, size }) => (
@@ -45,6 +52,13 @@ export const MainTabNavigator: React.FC = () => {
       <Tab.Screen
         name="PujasTab"
         component={PujaNavigator}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('PujasTab', {
+              screen: 'PujaCatalog',
+            });
+          },
+        })}
         options={{
           tabBarLabel: 'Pujas',
           tabBarIcon: ({ color, size }) => (
@@ -82,6 +96,13 @@ export const MainTabNavigator: React.FC = () => {
       <Tab.Screen
         name="PanditsTab"
         component={PanditNavigator}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('PanditsTab', {
+              screen: 'PanditsDirectory',
+            });
+          },
+        })}
         options={{
           tabBarLabel: 'Pandits',
           tabBarIcon: () => (
@@ -101,6 +122,13 @@ export const MainTabNavigator: React.FC = () => {
       <Tab.Screen
         name="StoreTab"
         component={StoreNavigator}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('StoreTab', {
+              screen: 'StoreHome',
+            });
+          },
+        })}
         options={{
           tabBarLabel: 'Samagri',
           tabBarIcon: ({ color, size }) => (
@@ -117,6 +145,13 @@ export const MainTabNavigator: React.FC = () => {
       <Tab.Screen
         name="AccountTab"
         component={AccountNavigator}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('AccountTab', {
+              screen: 'DevoteeDashboard',
+            });
+          },
+        })}
         options={{
           tabBarLabel: 'Devotee',
           tabBarIcon: ({ color, size }) => (
