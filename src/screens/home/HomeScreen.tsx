@@ -145,7 +145,7 @@ export const HomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Right: Notification bell & Search */}
+        {/* Right: Festival Calendar & Search */}
         <View style={styles.headerRightActions}>
           <TouchableOpacity
             style={styles.headerIconButton}
@@ -153,15 +153,12 @@ export const HomeScreen: React.FC = () => {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             activeOpacity={0.7}
           >
-            <View style={styles.notificationWrap}>
-              <Icon
-                family="material-community"
-                name="bell-outline"
-                size={23}
-                color="#1E1E24"
-              />
-              <View style={styles.notificationDot} />
-            </View>
+            <Icon
+              family="material-community"
+              name="calendar-month-outline"
+              size={23}
+              color="#1E1E24"
+            />
           </TouchableOpacity>
 
           <TouchableOpacity

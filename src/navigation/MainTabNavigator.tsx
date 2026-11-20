@@ -1,28 +1,38 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainTabParamList } from '../types';
 import { HomeNavigator } from './HomeNavigator';
 import { PujaNavigator } from './PujaNavigator';
-import { JapamMalaScreen } from '../screens/utilities/JapamMalaScreen';
 import { PanditNavigator } from './PanditNavigator';
 import { StoreNavigator } from './StoreNavigator';
 import { AccountNavigator } from './AccountNavigator';
 import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
 import { Icon } from '../components/common/Icon';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const MainTabNavigator: React.FC = () => {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8);
+  const barHeight = (Platform.OS === 'ios' ? 56 : 58) + bottomPadding;
+
   return (
     <Tab.Navigator
       initialRouteName="HomeTab"
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: styles.tabBar,
+        tabBarInactiveTintColor: '#8C827A',
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: barHeight,
+            paddingBottom: bottomPadding,
+          },
+        ],
         tabBarLabelStyle: styles.tabBarLabel,
       }}
     >
@@ -38,13 +48,15 @@ export const MainTabNavigator: React.FC = () => {
         })}
         options={{
           tabBarLabel: 'Darshan',
-          tabBarIcon: ({ color, size }) => (
-            <Icon
-              family="material"
-              name="home"
-              size={size || 24}
-              color={color}
-            />
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+              <Icon
+                family="material-community"
+                name={focused ? 'home-variant' : 'home-variant-outline'}
+                size={22}
+                color={focused ? colors.primary : '#8C827A'}
+              />
+            </View>
           ),
         }}
       />
@@ -61,38 +73,20 @@ export const MainTabNavigator: React.FC = () => {
         })}
         options={{
           tabBarLabel: 'Pujas',
-          tabBarIcon: ({ color, size }) => (
-            <Icon
-              family="material-community"
-              name="fire"
-              size={size || 24}
-              color={color}
-            />
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+              <Icon
+                family="material-community"
+                name={focused ? 'fire' : 'fire'}
+                size={22}
+                color={focused ? colors.primary : '#8C827A'}
+              />
+            </View>
           ),
         }}
       />
 
-      {/* Central Elevated Sacred Action (Japam Mala 108 Beads) - commented out as requested */}
-      {/* <Tab.Screen
-        name="MalaTab"
-        component={JapamMalaScreen}
-        options={{
-          tabBarLabel: 'Japam',
-          tabBarIcon: () => (
-            <View style={styles.centralTabAction}>
-              <Icon
-                family="material-community"
-                name="om"
-                size={26}
-                color="#FFFFFF"
-              />
-            </View>
-          ),
-          tabBarLabelStyle: styles.centralLabel,
-        }}
-      /> */}
-
-      {/* Central Pandits Tab (Gurukul Acharyas & Pandits Directory) */}
+      {/* Central Elevated Pandits Tab (Gurukul Acharyas) */}
       <Tab.Screen
         name="PanditsTab"
         component={PanditNavigator}
@@ -105,14 +99,21 @@ export const MainTabNavigator: React.FC = () => {
         })}
         options={{
           tabBarLabel: 'Pandits',
-          tabBarIcon: () => (
-            <View style={styles.centralTabAction}>
-              <Icon
-                family="material-community"
-                name="account-group"
-                size={26}
-                color="#FFFFFF"
-              />
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={[
+                styles.centralTabAction,
+                focused && styles.centralTabActionActive,
+              ]}
+            >
+              <View style={styles.centralTabInner}>
+                <Icon
+                  family="material-community"
+                  name="account-group"
+                  size={24}
+                  color={focused ? '#FFF5D6' : '#FFFFFF'}
+                />
+              </View>
             </View>
           ),
           tabBarLabelStyle: styles.centralLabel,
@@ -131,13 +132,15 @@ export const MainTabNavigator: React.FC = () => {
         })}
         options={{
           tabBarLabel: 'Samagri',
-          tabBarIcon: ({ color, size }) => (
-            <Icon
-              family="material-community"
-              name="shopping-outline"
-              size={size || 24}
-              color={color}
-            />
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+              <Icon
+                family="material-community"
+                name={focused ? 'shopping' : 'shopping-outline'}
+                size={22}
+                color={focused ? colors.primary : '#8C827A'}
+              />
+            </View>
           ),
         }}
       />
@@ -154,13 +157,15 @@ export const MainTabNavigator: React.FC = () => {
         })}
         options={{
           tabBarLabel: 'Devotee',
-          tabBarIcon: ({ color, size }) => (
-            <Icon
-              family="material"
-              name="person"
-              size={size || 24}
-              color={color}
-            />
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+              <Icon
+                family="material-community"
+                name={focused ? 'account-circle' : 'account-circle-outline'}
+                size={22}
+                color={focused ? colors.primary : '#8C827A'}
+              />
+            </View>
           ),
         }}
       />
@@ -171,15 +176,31 @@ export const MainTabNavigator: React.FC = () => {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: '#FFFFFF',
-    borderTopColor: colors.borderWarm,
-    borderTopWidth: 1,
-    height: 64,
-    paddingBottom: 8,
-    paddingTop: 8,
+    borderTopColor: '#F0E4D5',
+    borderTopWidth: 1.2,
+    paddingTop: 6,
+    // Soft sacred shadow
+    shadowColor: '#4A0D15',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 12,
   },
   tabBarLabel: {
-    ...typography.captionSmall,
+    fontSize: 10.5,
     fontWeight: '600',
+    letterSpacing: 0.2,
+    marginTop: 2,
+  },
+  iconWrap: {
+    width: 42,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapActive: {
+    backgroundColor: 'rgba(126, 21, 40, 0.09)', // Sacred crimson soft aura
   },
   centralTabAction: {
     width: 48,
@@ -188,18 +209,32 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 3,
+    marginBottom: 14,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
     shadowColor: colors.primaryDark,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 6,
-    elevation: 5,
+    elevation: 7,
+  },
+  centralTabActionActive: {
+    borderColor: '#E5C378', // Sacred golden halo border
+    backgroundColor: '#680E1C',
+    shadowColor: '#D97706',
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 9,
+  },
+  centralTabInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   centralLabel: {
-    ...typography.captionSmall,
+    fontSize: 10.5,
     fontWeight: '700',
+    letterSpacing: 0.2,
     color: colors.primary,
+    marginTop: 2,
   },
 });
