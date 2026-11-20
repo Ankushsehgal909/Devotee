@@ -6,6 +6,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   token: string | null;
+  refreshToken: string | null;
   user: User | null;
   setSession: (session: AuthSession) => Promise<void>;
   updateUser: (partial: Partial<User>) => Promise<void>;
@@ -19,15 +20,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   isLoading: true,
   token: null,
+  refreshToken: null,
   user: null,
 
   setSession: async (session: AuthSession) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-      const activeToken = session.tokens?.accessToken || session.accessToken || null;
+      const activeToken =
+        session.tokens?.accessToken ||
+        session.accessToken ||
+        (session as any).token ||
+        null;
+      const activeRefreshToken =
+        session.tokens?.refreshToken || session.refreshToken || null;
+
+      const normalizedSession: AuthSession = {
+        ...session,
+        accessToken: activeToken || undefined,
+        refreshToken: activeRefreshToken || undefined,
+        user: session.user,
+      };
+
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedSession));
+
       set({
-        isAuthenticated: !!activeToken,
+        isAuthenticated: !!(activeToken || session.user),
         token: activeToken,
+        refreshToken: activeRefreshToken,
         user: session.user,
         isLoading: false,
       });
@@ -42,9 +60,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const updatedUser = { ...currentUser, ...partial };
     set({ user: updatedUser });
     const currentToken = get().token;
-    if (currentToken) {
+    const currentRefreshToken = get().refreshToken;
+    if (currentToken || currentRefreshToken || updatedUser) {
       const session: AuthSession = {
-        accessToken: currentToken,
+        accessToken: currentToken || undefined,
+        refreshToken: currentRefreshToken || undefined,
         user: updatedUser,
         expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
       };
@@ -61,6 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         isAuthenticated: false,
         token: null,
+        refreshToken: null,
         user: null,
         isLoading: false,
       });
@@ -72,12 +93,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
         const session: AuthSession = JSON.parse(raw);
-        const activeToken = session.tokens?.accessToken || session.accessToken || null;
-        if (activeToken) {
+        const activeToken =
+          session.tokens?.accessToken ||
+          session.accessToken ||
+          (session as any).token ||
+          null;
+        const activeRefreshToken =
+          session.tokens?.refreshToken || session.refreshToken || null;
+
+        if (activeToken || session.user) {
           set({
             isAuthenticated: true,
             token: activeToken,
-            user: session.user,
+            refreshToken: activeRefreshToken,
+            user: session.user || null,
             isLoading: false,
           });
           return;
@@ -86,6 +115,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e) {
       console.error('Failed to load auth session', e);
     }
-    set({ isLoading: false });
+    set({
+      isLoading: false,
+      isAuthenticated: false,
+      token: null,
+      refreshToken: null,
+      user: null,
+    });
   },
 }));

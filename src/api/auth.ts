@@ -114,3 +114,33 @@ export async function updateProfileApi(profile: Partial<User>): Promise<User> {
     body: profile,
   });
 }
+
+/** Attempt to refresh the access token using refreshToken */
+export async function refreshAccessTokenApi(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string } | null> {
+  try {
+    const base = 'https://apiuat.vedsarthi.com/api/v1';
+    const res = await fetch(`${base}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (res.ok) {
+      const payload: any = await res.json().catch(() => null);
+      const data = payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
+      const accessToken = data?.tokens?.accessToken || data?.accessToken;
+      if (accessToken) {
+        return {
+          accessToken,
+          refreshToken: data?.tokens?.refreshToken || data?.refreshToken || refreshToken,
+        };
+      }
+    }
+  } catch {
+    // Network or server error on refresh
+  }
+  return null;
+}

@@ -1,5 +1,6 @@
 import { ENV } from '../config/env';
 import { useAuthStore } from '../store/useAuthStore';
+import { refreshAccessTokenApi } from './auth';
 
 export interface ApiResponseEnvelope<T> {
   success: boolean;
@@ -80,8 +81,51 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (!response.ok) {
     if (response.status === 401) {
-      useAuthStore.getState().logout();
+      const isAuthEndpoint = path.startsWith('/auth/');
+      const { refreshToken, setSession, user } = useAuthStore.getState();
+
+      if (!isAuthEndpoint && refreshToken && user) {
+        try {
+          const refreshed = await refreshAccessTokenApi(refreshToken);
+          if (refreshed?.accessToken) {
+            await setSession({
+              accessToken: refreshed.accessToken,
+              refreshToken: refreshed.refreshToken || refreshToken,
+              user,
+            });
+
+            // Retry original request with newly refreshed token
+            requestHeaders.set('Authorization', `Bearer ${refreshed.accessToken}`);
+            const retryResponse = await fetch(url, {
+              ...rest,
+              headers: requestHeaders,
+              body:
+                body !== undefined
+                  ? body instanceof FormData
+                    ? body
+                    : JSON.stringify(body)
+                  : undefined,
+            });
+
+            if (retryResponse.ok) {
+              const retryPayload: any = await retryResponse.json().catch(() => null);
+              return retryPayload &&
+                typeof retryPayload === 'object' &&
+                'data' in retryPayload
+                ? retryPayload.data
+                : retryPayload;
+            }
+          }
+        } catch {
+          // Token refresh attempt failed; retain local session
+        }
+      }
+
+      // Note: We do NOT automatically call logout() on background 401 errors.
+      // Auto-logout erases the devotee's saved session from storage upon app reload.
+      // Devotees remain signed in locally and can explicitly log out when they choose to.
     }
+
     const message =
       payload?.errors?.length
         ? payload.errors.join(', ')

@@ -9,7 +9,6 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { PujaStackParamList } from '../../types';
 import { colors } from '../../theme/colors';
@@ -17,9 +16,9 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
-import { Header } from '../../components/common/Header';
-import { Button } from '../../components/common/Button';
 import { Icon } from '../../components/common/Icon';
+import { CommonAppBackgroundScreen } from '../../components/common/CommonAppBackgroundScreen';
+import { LinearGradient } from '../../components/common/LinearGradient';
 import { useService } from '../../api/services';
 import {
   useCreateBooking,
@@ -28,14 +27,39 @@ import {
   useDevoteeAccount,
 } from '../../api/customer';
 import { resolveLocalizedText } from '../../utils/localization';
-import { siteImages, getPujaImageUrl } from '../../constants/images';
+import { localImages, siteImages, getPujaImageUrl } from '../../constants/images';
 
 type CheckoutRouteProp = RouteProp<PujaStackParamList, 'PujaCheckout'>;
 
 const MUHURAT_SLOTS = [
-  { id: 'morning', label: 'Pratah Kaal (Morning)', time: '07:30 AM - 10:00 AM', tag: 'Shubh' },
-  { id: 'abhijit', label: 'Abhijit Muhurat (Peak)', time: '11:45 AM - 01:15 PM', tag: 'Sarvottam' },
-  { id: 'evening', label: 'Sandhya Kaal (Evening)', time: '05:30 PM - 08:00 PM', tag: 'Shanti' },
+  {
+    id: 'morning',
+    label: 'Pratah Kaal (Morning)',
+    time: '07:30 AM - 10:00 AM',
+    tag: 'Brahma Muhurat',
+    desc: 'Ideal for Surya Aradhana, Ganapati Pujan, and Hawans.',
+  },
+  {
+    id: 'abhijit',
+    label: 'Abhijit Muhurat (Peak Auspicious)',
+    time: '11:45 AM - 01:15 PM',
+    tag: 'Sarvottam',
+    desc: 'Universal victory window, highly auspicious for all pujas.',
+  },
+  {
+    id: 'evening',
+    label: 'Sandhya Kaal (Evening)',
+    time: '05:30 PM - 08:00 PM',
+    tag: 'Pradosh Shanti',
+    desc: 'Supreme for Shiva Archana, Sundarkand, and Lakshmi Aradhana.',
+  },
+];
+
+const STEP_ITEMS = [
+  { step: 1, title: 'Venue', icon: 'home' },
+  { step: 2, title: 'Muhurat', icon: 'schedule' },
+  { step: 3, title: 'Sankalp', icon: 'people' },
+  { step: 4, title: 'Dakshina', icon: 'verified' },
 ];
 
 export const PujaCheckoutScreen: React.FC = () => {
@@ -72,10 +96,12 @@ export const PujaCheckoutScreen: React.FC = () => {
   const dates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i + 1);
+    const dayNamesHindi = ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'];
     return {
       index: i + 1,
       dateString: d.toISOString().split('T')[0],
       dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      dayNameHindi: dayNamesHindi[d.getDay()],
       dayNumber: d.getDate(),
       monthName: d.toLocaleDateString('en-US', { month: 'short' }),
     };
@@ -116,7 +142,7 @@ export const PujaCheckoutScreen: React.FC = () => {
       const bookingId = res?.id || res?._id || `VED-BK-${Date.now().toString().slice(-6)}`;
 
       Alert.alert(
-        'Vedic Booking Confirmed!',
+        '॥ वैदिक संकल्प सुरक्षित ॥',
         `Your muhurat for ${serviceTitle} has been reserved. Attendance verification token generated.`,
         [
           {
@@ -128,10 +154,10 @@ export const PujaCheckoutScreen: React.FC = () => {
         ]
       );
     } catch {
-      // If offline or dev sandbox error, route gracefully to booking confirmation
+      // Offline fallback
       const fakeId = `VED-${Date.now().toString().slice(-6)}`;
       Alert.alert(
-        'Vedic Booking Reserved',
+        '॥ वैदिक संकल्प सुरक्षित ॥',
         `Your sacred Muhurat slot has been reserved for ${serviceTitle}.`,
         [
           {
@@ -145,98 +171,309 @@ export const PujaCheckoutScreen: React.FC = () => {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <Header
-        title="Sacred Puja Booking"
-        subtitle={resolveLocalizedText(service?.title, 'Muhurat & Dakshina')}
-        showBack
-        onBackPress={() => {
-          if (step > 1) {
-            setStep((s) => (s - 1) as any);
-          } else {
-            navigation.goBack();
-          }
-        }}
-      />
+  const serviceTitle = resolveLocalizedText(service?.title, 'Sacred Vedic Ceremony');
+  const serviceImageUrl = getPujaImageUrl(service, 0);
 
-      {/* Progress Indicator */}
-      <View style={styles.stepProgressBar}>
-        {[1, 2, 3, 4].map((s) => (
-          <View
-            key={s}
-            style={[
-              styles.stepProgressSegment,
-              s <= step ? styles.stepProgressActive : styles.stepProgressInactive,
-            ]}
-          />
-        ))}
+  return (
+    <CommonAppBackgroundScreen
+      safeAreaEdges={['top', 'left', 'right']}
+      resizeMode="stretch"
+    >
+      {/* Top Header Bar */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => {
+            if (step > 1) {
+              setStep((s) => (s - 1) as any);
+            } else {
+              navigation.goBack();
+            }
+          }}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Icon family="material" name="arrow-back" size={24} color="#6B0E1E" />
+        </TouchableOpacity>
+
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerTitle}>Sacred Puja Booking</Text>
+          <Text style={styles.headerSubtitle} numberOfLines={1}>
+            {serviceTitle}
+          </Text>
+        </View>
+
+        <View style={styles.stepCounterBadge}>
+          <Text style={styles.stepCounterText}>Step {step}/4</Text>
+        </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Step 1: Venue & Mode */}
+      {/* Stepper Progress Bar */}
+      <View style={styles.stepperContainer}>
+        {STEP_ITEMS.map((item, index) => {
+          const isDone = item.step < step;
+          const isCurrent = item.step === step;
+
+          return (
+            <React.Fragment key={item.step}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (item.step < step) {
+                    setStep(item.step as any);
+                  }
+                }}
+                activeOpacity={item.step < step ? 0.7 : 1}
+                style={styles.stepItem}
+              >
+                <View
+                  style={[
+                    styles.stepCircle,
+                    isDone && styles.stepCircleDone,
+                    isCurrent && styles.stepCircleCurrent,
+                  ]}
+                >
+                  {isDone ? (
+                    <Icon family="material" name="check" size={14} color="#FFFFFF" />
+                  ) : (
+                    <Icon
+                      family="material"
+                      name={item.icon}
+                      size={14}
+                      color={isCurrent ? '#FFFFFF' : '#8A7E73'}
+                    />
+                  )}
+                </View>
+                <Text
+                  style={[
+                    styles.stepLabel,
+                    isCurrent && styles.stepLabelCurrent,
+                    isDone && styles.stepLabelDone,
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+
+              {index < STEP_ITEMS.length - 1 && (
+                <View
+                  style={[
+                    styles.stepConnector,
+                    item.step < step && styles.stepConnectorActive,
+                  ]}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Service Hero Snippet */}
+        <View style={styles.serviceHeroCard}>
+          <Image source={{ uri: serviceImageUrl }} style={styles.serviceHeroImg} />
+          <View style={styles.serviceHeroDetails}>
+            <View style={styles.heroBadgeRow}>
+              <Badge label="Gurukul Certified" variant="sacred" />
+              <Text style={styles.heroPriceText}>₹{totalDakshinaRs}</Text>
+            </View>
+            <Text style={styles.serviceHeroTitle} numberOfLines={1}>
+              {serviceTitle}
+            </Text>
+            <Text style={styles.serviceHeroSub}>
+              Authentic Vedic vidhi by verified Acharya
+            </Text>
+          </View>
+        </View>
+
+        {/* STEP 1: VENUE & MODE */}
         {step === 1 && (
           <View>
-            <Text style={styles.stepTitle}>Step 1: Choose Ceremony Mode & Venue</Text>
-            <Text style={styles.stepSubtitle}>
-              Select where the Acharya should perform the authentic Vedic vidhi.
-            </Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.stepHeading}>Step 1: Choose Ceremony Mode</Text>
+              <Text style={styles.stepDescription}>
+                Select where the Acharya should perform the authentic Vedic ritual.
+              </Text>
+            </View>
 
             <View style={styles.modeContainer}>
+              {/* Home Visit Mode */}
               <TouchableOpacity
-                style={[styles.modeCard, mode === 'home_visit' && styles.modeCardActive]}
+                style={[
+                  styles.modeCard,
+                  mode === 'home_visit' && styles.modeCardActive,
+                ]}
                 onPress={() => setMode('home_visit')}
+                activeOpacity={0.8}
               >
-                <Icon
-                  family="material"
-                  name="home"
-                  size={24}
-                  color={mode === 'home_visit' ? colors.primary : colors.textMuted}
-                />
-                <Text style={[styles.modeCardTitle, mode === 'home_visit' && styles.modeCardTitleActive]}>
-                  Doorstep Home Visit
-                </Text>
-                <Text style={styles.modeCardDesc}>Acharya travels to your home with Hawan samagri.</Text>
+                <View style={styles.modeIconCircle}>
+                  <Icon
+                    family="material"
+                    name="home"
+                    size={22}
+                    color={mode === 'home_visit' ? '#6B0E1E' : '#7A6E63'}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.modeTitleRow}>
+                    <Text
+                      style={[
+                        styles.modeTitle,
+                        mode === 'home_visit' && styles.modeTitleActive,
+                      ]}
+                    >
+                      Doorstep Home Visit
+                    </Text>
+                    {mode === 'home_visit' && (
+                      <Icon
+                        family="material"
+                        name="check-circle"
+                        size={20}
+                        color="#6B0E1E"
+                      />
+                    )}
+                  </View>
+                  <Text style={styles.modeDesc}>
+                    Acharya visits your home carrying consecrated copper Hawan Kund, Ganga Jal and Vedic dravyas.
+                  </Text>
+                </View>
               </TouchableOpacity>
 
+              {/* Live Online E-Puja */}
               <TouchableOpacity
-                style={[styles.modeCard, mode === 'online' && styles.modeCardActive]}
+                style={[
+                  styles.modeCard,
+                  mode === 'online' && styles.modeCardActive,
+                ]}
                 onPress={() => setMode('online')}
+                activeOpacity={0.8}
               >
-                <Icon
-                  family="material"
-                  name="videocam"
-                  size={24}
-                  color={mode === 'online' ? colors.primary : colors.textMuted}
-                />
-                <Text style={[styles.modeCardTitle, mode === 'online' && styles.modeCardTitleActive]}>
-                  Live Online E-Puja
-                </Text>
-                <Text style={styles.modeCardDesc}>Interactive 1:1 HD stream with individualized Sankalp.</Text>
+                <View style={styles.modeIconCircle}>
+                  <Icon
+                    family="material"
+                    name="videocam"
+                    size={22}
+                    color={mode === 'online' ? '#6B0E1E' : '#7A6E63'}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.modeTitleRow}>
+                    <Text
+                      style={[
+                        styles.modeTitle,
+                        mode === 'online' && styles.modeTitleActive,
+                      ]}
+                    >
+                      Live Online E-Puja
+                    </Text>
+                    {mode === 'online' && (
+                      <Icon
+                        family="material"
+                        name="check-circle"
+                        size={20}
+                        color="#6B0E1E"
+                      />
+                    )}
+                  </View>
+                  <Text style={styles.modeDesc}>
+                    Interactive 1:1 HD video stream with individual Gotra Sankalp chanted directly to your screen.
+                  </Text>
+                </View>
               </TouchableOpacity>
 
+              {/* Temple Sanctum */}
               <TouchableOpacity
-                style={[styles.modeCard, mode === 'in_person' && styles.modeCardActive]}
+                style={[
+                  styles.modeCard,
+                  mode === 'in_person' && styles.modeCardActive,
+                ]}
                 onPress={() => setMode('in_person')}
+                activeOpacity={0.8}
               >
-                <Icon
-                  family="material-community"
-                  name="temple-hindu"
-                  size={24}
-                  color={mode === 'in_person' ? colors.primary : colors.textMuted}
-                />
-                <Text style={[styles.modeCardTitle, mode === 'in_person' && styles.modeCardTitleActive]}>
-                  Temple Sanctum
-                </Text>
-                <Text style={styles.modeCardDesc}>Performed at consecrated Kashi / Haridwar Teerth mandir.</Text>
+                <View style={styles.modeIconCircle}>
+                  <Icon
+                    family="material-community"
+                    name="temple-hindu"
+                    size={22}
+                    color={mode === 'in_person' ? '#6B0E1E' : '#7A6E63'}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.modeTitleRow}>
+                    <Text
+                      style={[
+                        styles.modeTitle,
+                        mode === 'in_person' && styles.modeTitleActive,
+                      ]}
+                    >
+                      Temple Sanctum (Kashi / Haridwar)
+                    </Text>
+                    {mode === 'in_person' && (
+                      <Icon
+                        family="material"
+                        name="check-circle"
+                        size={20}
+                        color="#6B0E1E"
+                      />
+                    )}
+                  </View>
+                  <Text style={styles.modeDesc}>
+                    Performed by priests at our consecrated sanctums on the sacred banks of Maa Ganga.
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
 
+            {/* Address Input Form for Home Visit */}
             {mode === 'home_visit' && (
-              <Card variant="warm" style={styles.formCard}>
-                <Text style={styles.formLabel}>Street Address / Society Name *</Text>
+              <View style={styles.formCard}>
+                <View style={styles.formCardHeader}>
+                  <Icon family="material" name="location-on" size={18} color="#6B0E1E" />
+                  <Text style={styles.formCardTitle}>Ceremony Venue Address</Text>
+                </View>
+
+                {addresses && addresses.length > 0 && (
+                  <View style={styles.savedAddressesBox}>
+                    <Text style={styles.savedAddressLabel}>Select Saved Address:</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+                      {addresses.map((addr: any) => {
+                        const addrStreet = addr?.street || addr?.line1 || '';
+                        const addrName = addr?.name || addr?.label || 'Venue';
+                        const addrCity = addr?.city || '';
+                        const addrPincode = addr?.pincode || addr?.postalCode || '';
+                        const isMatch = (addrStreet && street === addrStreet) || (addrPincode && pincode === addrPincode);
+                        const displaySnippet = addrStreet
+                          ? addrStreet.length > 20
+                            ? `${addrStreet.slice(0, 20)}...`
+                            : addrStreet
+                          : addrCity || 'Saved Venue';
+
+                        return (
+                          <TouchableOpacity
+                            key={addr.id || Math.random().toString()}
+                            style={[styles.savedAddrChip, isMatch && styles.savedAddrChipActive]}
+                            onPress={() => {
+                              if (addrStreet) setStreet(addrStreet);
+                              if (addrCity) setCity(addrCity);
+                              if (addrPincode) setPincode(addrPincode);
+                            }}
+                          >
+                            <Text style={[styles.savedAddrText, isMatch && styles.savedAddrTextActive]}>
+                              {addrName}: {displaySnippet}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+
+                <Text style={styles.inputLabel}>Street Address / Society Name *</Text>
                 <TextInput
                   placeholder="Enter street address"
+                  placeholderTextColor="#A3988C"
                   value={street}
                   onChangeText={setStreet}
                   style={styles.textInput}
@@ -244,18 +481,20 @@ export const PujaCheckoutScreen: React.FC = () => {
 
                 <View style={styles.rowInputs}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.formLabel}>City *</Text>
+                    <Text style={styles.inputLabel}>City *</Text>
                     <TextInput
                       placeholder="Enter city"
+                      placeholderTextColor="#A3988C"
                       value={city}
                       onChangeText={setCity}
                       style={styles.textInput}
                     />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.formLabel}>Pincode *</Text>
+                    <Text style={styles.inputLabel}>Pincode *</Text>
                     <TextInput
                       placeholder="Enter pincode"
+                      placeholderTextColor="#A3988C"
                       value={pincode}
                       onChangeText={setPincode}
                       keyboardType="number-pad"
@@ -264,29 +503,45 @@ export const PujaCheckoutScreen: React.FC = () => {
                     />
                   </View>
                 </View>
-              </Card>
+              </View>
             )}
 
-            <Button
-              title="Next: Select Auspicious Muhurat"
+            {/* Next Action Button */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.primaryBtn}
               onPress={() => setStep(2)}
-              size="lg"
-              style={styles.nextBtn}
-              rightIcon={<Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />}
-            />
+            >
+              <LinearGradient
+                colors={['#8B1528', '#5A0C1A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.primaryBtnGradient}
+              >
+                <Text style={styles.primaryBtnText}>Next: Select Auspicious Muhurat</Text>
+                <Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         )}
 
-        {/* Step 2: Date & Muhurat Window */}
+        {/* STEP 2: AUSPICIOUS DATE & MUHURAT */}
         {step === 2 && (
           <View>
-            <Text style={styles.stepTitle}>Step 2: Auspicious Date & Muhurat Slot</Text>
-            <Text style={styles.stepSubtitle}>
-              Select your preferred day. Timings are calculated per daily Vedic astral ephemeris.
-            </Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.stepHeading}>Step 2: Auspicious Date & Muhurat</Text>
+              <Text style={styles.stepDescription}>
+                Select your preferred day. Timings are calculated per daily Vedic astral ephemeris.
+              </Text>
+            </View>
 
-            {/* Horizontal Date Picker */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateStrip}>
+            {/* Horizontal Shubh Date Picker */}
+            <Text style={styles.subHeadingTitle}>Select Sacred Day</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.dateStrip}
+            >
               {dates.map((d) => {
                 const isSelected = selectedDaysAhead === d.index;
                 return (
@@ -294,16 +549,27 @@ export const PujaCheckoutScreen: React.FC = () => {
                     key={d.index}
                     style={[styles.dateChip, isSelected && styles.dateChipActive]}
                     onPress={() => setSelectedDaysAhead(d.index)}
+                    activeOpacity={0.8}
                   >
-                    <Text style={[styles.dateDayName, isSelected && styles.dateTextActive]}>{d.dayName}</Text>
-                    <Text style={[styles.dateDayNum, isSelected && styles.dateTextActive]}>{d.dayNumber}</Text>
-                    <Text style={[styles.dateMonth, isSelected && styles.dateTextActive]}>{d.monthName}</Text>
+                    <Text style={[styles.dateHindiDay, isSelected && styles.dateTextActive]}>
+                      {d.dayNameHindi}
+                    </Text>
+                    <Text style={[styles.dateDayNum, isSelected && styles.dateTextActive]}>
+                      {d.dayNumber}
+                    </Text>
+                    <Text style={[styles.dateMonth, isSelected && styles.dateTextActive]}>
+                      {d.monthName}
+                    </Text>
+                    <View style={[styles.shubhDot, isSelected && styles.shubhDotActive]} />
                   </TouchableOpacity>
                 );
               })}
             </ScrollView>
 
-            <Text style={styles.subHeading}>Muhurat Windows ({selectedDateObj.dateString})</Text>
+            {/* Muhurat Windows */}
+            <Text style={styles.subHeadingTitle}>
+              Shubh Muhurat Windows ({selectedDateObj.dateString})
+            </Text>
             <View style={styles.slotsList}>
               {MUHURAT_SLOTS.map((slot) => {
                 const isSelected = selectedSlot === slot.id;
@@ -312,107 +578,185 @@ export const PujaCheckoutScreen: React.FC = () => {
                     key={slot.id}
                     style={[styles.slotCard, isSelected && styles.slotCardActive]}
                     onPress={() => setSelectedSlot(slot.id)}
+                    activeOpacity={0.8}
                   >
                     <View style={styles.slotLeft}>
-                      <Icon
-                        family="material"
-                        name="schedule"
-                        size={20}
-                        color={isSelected ? colors.primary : colors.textMuted}
-                      />
-                      <View>
-                        <Text style={[styles.slotTitle, isSelected && styles.slotTitleActive]}>
-                          {slot.label}
-                        </Text>
+                      <View
+                        style={[
+                          styles.slotIconCircle,
+                          isSelected && styles.slotIconCircleActive,
+                        ]}
+                      >
+                        <Icon
+                          family="material"
+                          name="schedule"
+                          size={18}
+                          color={isSelected ? '#6B0E1E' : '#7A6E63'}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={styles.slotTitleRow}>
+                          <Text
+                            style={[
+                              styles.slotTitle,
+                              isSelected && styles.slotTitleActive,
+                            ]}
+                          >
+                            {slot.label}
+                          </Text>
+                          <Badge
+                            label={slot.tag}
+                            variant={isSelected ? 'sacred' : 'neutral'}
+                          />
+                        </View>
                         <Text style={styles.slotTime}>{slot.time}</Text>
+                        <Text style={styles.slotDesc}>{slot.desc}</Text>
                       </View>
                     </View>
-                    <Badge label={slot.tag} variant={isSelected ? 'gold' : 'neutral'} />
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            <Text style={styles.formLabel}>Special Shastric Notes or Specific Deity Requests (Optional)</Text>
-            <TextInput
-              placeholder="Enter special instructions or notes"
-              value={specialNotes}
-              onChangeText={setSpecialNotes}
-              multiline
-              numberOfLines={3}
-              style={[styles.textInput, { height: 75, textAlignVertical: 'top' }]}
-            />
+            {/* Special Shastric Instructions */}
+            <View style={styles.notesBox}>
+              <Text style={styles.inputLabel}>
+                Special Shastric Notes or Specific Deity Requests (Optional)
+              </Text>
+              <TextInput
+                placeholder="Enter special instructions or notes"
+                placeholderTextColor="#A3988C"
+                value={specialNotes}
+                onChangeText={setSpecialNotes}
+                multiline
+                numberOfLines={3}
+                style={[styles.textInput, { height: 75, textAlignVertical: 'top' }]}
+              />
+            </View>
 
-            <Button
-              title="Next: Pandit & Sankalp Setup"
+            {/* Action Buttons */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.primaryBtn}
               onPress={() => setStep(3)}
-              size="lg"
-              style={styles.nextBtn}
-              rightIcon={<Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />}
-            />
+            >
+              <LinearGradient
+                colors={['#8B1528', '#5A0C1A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.primaryBtnGradient}
+              >
+                <Text style={styles.primaryBtnText}>Next: Pandit & Sankalp Setup</Text>
+                <Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         )}
 
-        {/* Step 3: Pandit & Samagri & Sankalp */}
+        {/* STEP 3: PANDIT & SAMAGRI & SANKALP */}
         {step === 3 && (
           <View>
-            <Text style={styles.stepTitle}>Step 3: Pandit Allocation & Family Sankalp</Text>
-            <Text style={styles.stepSubtitle}>
-              Certified Gurukul Acharyas are matched based on your Gotra and ritual requirements.
-            </Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.stepHeading}>Step 3: Pandit Allocation & Sankalp</Text>
+              <Text style={styles.stepDescription}>
+                Certified Gurukul Acharyas are matched based on your Gotra and ritual requirements.
+              </Text>
+            </View>
 
-            {/* Pandit Allocation Card */}
-            <Card variant="warm" style={styles.panditCard}>
+            {/* Acharya Allocation Preview Card */}
+            <View style={styles.panditCard}>
               <View style={styles.panditRow}>
                 <Image
                   source={{ uri: siteImages.homeAssetsVerticalsGurukulAcharyas }}
                   style={styles.panditAvatar}
                 />
                 <View style={{ flex: 1 }}>
-                  <Badge label="Verified Acharya" variant="success" />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Badge label="Verified Acharya" variant="success" />
+                    <Badge label="Shukla Yajurveda" variant="sacred" />
+                  </View>
                   <Text style={styles.panditName}>Gurukul Certified Acharya Allocation</Text>
-                  <Text style={styles.panditShakha}>Shukla Yajurveda & Kashi Vidvat Parishad Certified</Text>
+                  <Text style={styles.panditShakha}>
+                    Kashi Vidvat Parishad & Sampurnanand Sanskrit Vishwavidyalaya
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.panditNote}>
-                VedSarthi automatically matches an authenticated Shastri fluent in Sanskrit & Hindi, carrying consecrated Hawan Kund.
-              </Text>
-            </Card>
+              <View style={styles.panditNoteBox}>
+                <Icon family="material" name="verified-user" size={16} color="#B45309" />
+                <Text style={styles.panditNoteText}>
+                  VedSarthi matches an authenticated Shastri fluent in Sanskrit & Hindi, carrying consecrated Hawan Kund.
+                </Text>
+              </View>
+            </View>
 
-            {/* Samagri Kit Option */}
-            <Text style={styles.subHeading}>Puja Samagri Arrangement</Text>
+            {/* Samagri Arrangement Options */}
+            <Text style={styles.subHeadingTitle}>Puja Samagri Arrangement</Text>
             <View style={styles.samagriOptions}>
               <TouchableOpacity
-                style={[styles.samagriOptionCard, samagriOption === 'full_kit' && styles.samagriActive]}
+                style={[
+                  styles.samagriCard,
+                  samagriOption === 'full_kit' && styles.samagriCardActive,
+                ]}
                 onPress={() => setSamagriOption('full_kit')}
+                activeOpacity={0.8}
               >
-                <Icon family="material-community" name="package-variant-closed" size={20} color={colors.primary} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.samagriTitle}>VedSarthi Consecrated Samagri Kit (Included)</Text>
-                  <Text style={styles.samagriDesc}>100% pure Gir Cow A2 Ghee, Katyayana herbs, Janeu, Kalash.</Text>
+                <View style={styles.samagriIconCircle}>
+                  <Icon
+                    family="material-community"
+                    name="package-variant-closed"
+                    size={20}
+                    color="#6B0E1E"
+                  />
                 </View>
-                {samagriOption === 'full_kit' && (
-                  <Icon family="material" name="check-circle" size={18} color={colors.primary} />
-                )}
+                <View style={{ flex: 1 }}>
+                  <View style={styles.samagriTitleRow}>
+                    <Text style={styles.samagriTitle}>
+                      VedSarthi Consecrated Samagri Kit (Included)
+                    </Text>
+                    {samagriOption === 'full_kit' && (
+                      <Icon family="material" name="check-circle" size={18} color="#6B0E1E" />
+                    )}
+                  </View>
+                  <Text style={styles.samagriDesc}>
+                    100% pure Gir Cow A2 Ghee, Katyayana herbs, Janeu, Kalash, and certified dravyas.
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.samagriOptionCard, samagriOption === 'devotee_arranges' && styles.samagriActive]}
+                style={[
+                  styles.samagriCard,
+                  samagriOption === 'devotee_arranges' && styles.samagriCardActive,
+                ]}
                 onPress={() => setSamagriOption('devotee_arranges')}
+                activeOpacity={0.8}
               >
-                <Icon family="material-community" name="home" size={20} color={colors.textMuted} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.samagriTitle}>Devotee Arranges All Dravyas</Text>
-                  <Text style={styles.samagriDesc}>Acharya will bring only Panchapatra and Shastric books.</Text>
+                <View style={styles.samagriIconCircle}>
+                  <Icon
+                    family="material-community"
+                    name="home-outline"
+                    size={20}
+                    color="#7A6E63"
+                  />
                 </View>
-                {samagriOption === 'devotee_arranges' && (
-                  <Icon family="material" name="check-circle" size={18} color={colors.primary} />
-                )}
+                <View style={{ flex: 1 }}>
+                  <View style={styles.samagriTitleRow}>
+                    <Text style={styles.samagriTitle}>
+                      Devotee Arranges All Dravyas
+                    </Text>
+                    {samagriOption === 'devotee_arranges' && (
+                      <Icon family="material" name="check-circle" size={18} color="#6B0E1E" />
+                    )}
+                  </View>
+                  <Text style={styles.samagriDesc}>
+                    Acharya brings only copper Panchapatra and Shastric puja books. Checklist provided.
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
 
             {/* Family Members Sankalp Picker */}
-            <Text style={styles.subHeading}>Include Family in Live Sankalp</Text>
+            <Text style={styles.subHeadingTitle}>Include Family Members in Live Sankalp</Text>
             {familyMembers && familyMembers.length > 0 ? (
               familyMembers.map((m) => {
                 const isSelected = selectedFamilyIds.includes(m.id);
@@ -427,77 +771,127 @@ export const PujaCheckoutScreen: React.FC = () => {
                         setSelectedFamilyIds((prev) => [...prev, m.id]);
                       }
                     }}
+                    activeOpacity={0.8}
                   >
                     <Icon
                       family="material"
                       name={isSelected ? 'check-box' : 'check-box-outline-blank'}
-                      size={20}
-                      color={isSelected ? colors.primary : colors.textMuted}
+                      size={22}
+                      color={isSelected ? '#6B0E1E' : '#8A7E73'}
                     />
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.familyName}>{m.name} ({m.relation.toUpperCase()})</Text>
-                      <Text style={styles.familyMeta}>Gotra: {m.gotra || 'Kashyap'} | Nakshatra: {m.nakshatra || 'Rohini'}</Text>
+                      <Text style={styles.familyName}>
+                        {m.name} ({m.relation.toUpperCase()})
+                      </Text>
+                      <Text style={styles.familyMeta}>
+                        Gotra: {m.gotra || 'Kashyap'} • Nakshatra: {m.nakshatra || 'Rohini'}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 );
               })
             ) : (
-              <Card style={{ padding: spacing.md }}>
+              <View style={styles.emptyFamilyCard}>
+                <Icon family="material" name="info-outline" size={18} color="#B45309" />
                 <Text style={styles.emptyFamilyNotice}>
-                  No secondary family members registered. Sankalp will be recited for {serverUser?.name || 'Devotee'} ({serverUser?.gotra || 'Kashyap'} Gotra).
+                  No secondary family members selected. Primary Sankalp will be chanted for{' '}
+                  <Text style={{ fontWeight: '700', color: '#6B0E1E' }}>
+                    {serverUser?.name || 'Devotee'}
+                  </Text>{' '}
+                  ({serverUser?.gotra || 'Kashyap'} Gotra).
                 </Text>
-              </Card>
+              </View>
             )}
 
-            <Button
-              title="Next: Review Dakshina & Reserve"
+            {/* Action Button */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.primaryBtn}
               onPress={() => setStep(4)}
-              size="lg"
-              style={styles.nextBtn}
-              rightIcon={<Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />}
-            />
+            >
+              <LinearGradient
+                colors={['#8B1528', '#5A0C1A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.primaryBtnGradient}
+              >
+                <Text style={styles.primaryBtnText}>Next: Review Dakshina & Reserve</Text>
+                <Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         )}
 
-        {/* Step 4: Review, Dakshina & Payment Choice */}
+        {/* STEP 4: DAKSHINA REVIEW & SLOT LOCK */}
         {step === 4 && (
           <View>
-            <Text style={styles.stepTitle}>Step 4: Dakshina Review & Slot Lock</Text>
-            <Text style={styles.stepSubtitle}>
-              Review your ceremony itinerary and choose your dakshina schedule.
-            </Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.stepHeading}>Step 4: Dakshina Review & Slot Lock</Text>
+              <Text style={styles.stepDescription}>
+                Review your sacred ceremony itinerary and select your dakshina schedule.
+              </Text>
+            </View>
 
-            {/* Summary Card */}
-            <Card style={styles.summaryCard}>
+            {/* Itinerary Summary Card */}
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryCardHeader}>
+                <Icon family="material-community" name="file-document-outline" size={18} color="#6B0E1E" />
+                <Text style={styles.summaryCardTitle}>Ceremony Booking Itinerary</Text>
+              </View>
+
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Ceremony Vidhi</Text>
-                <Text style={styles.summaryValue}>{resolveLocalizedText(service?.title, 'Vedic Vidhi')}</Text>
+                <Text style={styles.summaryValue}>{serviceTitle}</Text>
               </View>
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Date & Muhurat</Text>
-                <Text style={styles.summaryValue}>{selectedDateObj.dateString} ({selectedSlot})</Text>
+                <Text style={styles.summaryLabel}>Scheduled Date</Text>
+                <Text style={styles.summaryValue}>{selectedDateObj.dateString}</Text>
               </View>
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Mode</Text>
-                <Text style={styles.summaryValue}>{mode === 'home_visit' ? 'Doorstep Home Visit' : mode === 'online' ? 'Live Online' : 'Temple'}</Text>
+                <Text style={styles.summaryLabel}>Muhurat Slot</Text>
+                <Text style={styles.summaryValue}>{selectedSlot.toUpperCase()}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Ceremony Mode</Text>
+                <Text style={styles.summaryValue}>
+                  {mode === 'home_visit'
+                    ? 'Doorstep Home Visit'
+                    : mode === 'online'
+                    ? 'Live Online E-Puja'
+                    : 'Temple Sanctum'}
+                </Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Samagri Dravyas</Text>
-                <Text style={styles.summaryValue}>{samagriOption === 'full_kit' ? '100% Consecrated Kit Included' : 'Devotee Self-Arranged'}</Text>
+                <Text style={styles.summaryValue}>
+                  {samagriOption === 'full_kit'
+                    ? '100% Consecrated Kit Included'
+                    : 'Devotee Self-Arranged'}
+                </Text>
               </View>
-              <View style={styles.divider} />
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryTotalLabel}>Total Ritual Dakshina</Text>
+
+              <View style={styles.summaryDivider} />
+
+              <View style={styles.summaryTotalRow}>
+                <View>
+                  <Text style={styles.summaryTotalLabel}>Total Ritual Dakshina</Text>
+                  <Text style={styles.summaryTotalSub}>Includes Pandit Seva & Taxes</Text>
+                </View>
                 <Text style={styles.summaryTotalVal}>₹{totalDakshinaRs}</Text>
               </View>
-            </Card>
+            </View>
 
-            {/* Payment Schedule Option */}
-            <Text style={styles.subHeading}>Dakshina Payment Schedule</Text>
+            {/* Payment Schedule Options */}
+            <Text style={styles.subHeadingTitle}>Dakshina Payment Schedule</Text>
             <View style={styles.paymentPlans}>
+              {/* Advance 25% Card */}
               <TouchableOpacity
-                style={[styles.planCard, paymentPlan === 'advance' && styles.planCardActive]}
+                style={[
+                  styles.planCard,
+                  paymentPlan === 'advance' && styles.planCardActive,
+                ]}
                 onPress={() => setPaymentPlan('advance')}
+                activeOpacity={0.8}
               >
                 <View style={styles.planHeader}>
                   <Text style={styles.planTitle}>25% Advance Booking Dakshina</Text>
@@ -509,298 +903,652 @@ export const PujaCheckoutScreen: React.FC = () => {
                 </Text>
               </TouchableOpacity>
 
+              {/* 100% Full Card */}
               <TouchableOpacity
-                style={[styles.planCard, paymentPlan === 'full' && styles.planCardActive]}
+                style={[
+                  styles.planCard,
+                  paymentPlan === 'full' && styles.planCardActive,
+                ]}
                 onPress={() => setPaymentPlan('full')}
+                activeOpacity={0.8}
               >
                 <View style={styles.planHeader}>
                   <Text style={styles.planTitle}>100% Full Payment</Text>
                   <Badge label="Complete" variant="neutral" />
                 </View>
                 <Text style={styles.planAmount}>₹{totalDakshinaRs} payable now</Text>
-                <Text style={styles.planSub}>Hassle-free zero dakshina coordination on the day of the puja.</Text>
+                <Text style={styles.planSub}>
+                  Hassle-free zero dakshina coordination on the day of the puja.
+                </Text>
               </TouchableOpacity>
             </View>
 
-            <Button
-              title={`Confirm & Reserve Slot (₹${payableNowRs})`}
+            {/* Trust Assurances */}
+            <View style={styles.trustBanner}>
+              <View style={styles.trustItem}>
+                <Icon family="material" name="verified" size={16} color="#16A34A" />
+                <Text style={styles.trustText}>Gurukul Certified</Text>
+              </View>
+              <View style={styles.trustItem}>
+                <Icon family="material" name="spa" size={16} color="#16A34A" />
+                <Text style={styles.trustText}>100% Pure Dravyas</Text>
+              </View>
+              <View style={styles.trustItem}>
+                <Icon family="material" name="security" size={16} color="#16A34A" />
+                <Text style={styles.trustText}>Slot Lock Protected</Text>
+              </View>
+            </View>
+
+            {/* Confirm & Reserve Button */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.primaryBtn}
               onPress={handleConfirmBooking}
-              loading={createBookingMutation.isPending}
-              size="lg"
-              style={styles.confirmBtn}
-              rightIcon={<Icon family="material" name="check" size={20} color="#FFFFFF" />}
-            />
+              disabled={createBookingMutation.isPending}
+            >
+              <LinearGradient
+                colors={['#8B1528', '#5A0C1A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.primaryBtnGradient}
+              >
+                <Text style={styles.primaryBtnText}>
+                  {createBookingMutation.isPending
+                    ? 'Reserving Slot...'
+                    : `Confirm & Reserve Slot (₹${payableNowRs})`}
+                </Text>
+                <Icon family="material" name="check-circle" size={18} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </CommonAppBackgroundScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bgSand,
-  },
-  stepProgressBar: {
+  topHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.screenPadding,
-    gap: 6,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.bgSand,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
-  stepProgressSegment: {
+  backBtn: {
+    padding: 6,
+    marginRight: 6,
+  },
+  headerTitleWrap: {
     flex: 1,
-    height: 4,
-    borderRadius: 2,
   },
-  stepProgressActive: {
-    backgroundColor: colors.primary,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#6B0E1E',
+    fontFamily: typography.fontFamilySerif,
   },
-  stepProgressInactive: {
-    backgroundColor: colors.borderWarm,
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#7A6E63',
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  stepCounterBadge: {
+    backgroundColor: '#FDECE7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
+  },
+  stepCounterText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6B0E1E',
+  },
+  stepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.screenPadding,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFE7DC',
+  },
+  stepItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  stepCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#EAE3D9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepCircleCurrent: {
+    backgroundColor: '#6B0E1E',
+  },
+  stepCircleDone: {
+    backgroundColor: '#16A34A',
+  },
+  stepLabel: {
+    fontSize: 11,
+    color: '#8A7E73',
+    fontWeight: '600',
+  },
+  stepLabelCurrent: {
+    color: '#6B0E1E',
+    fontWeight: '700',
+  },
+  stepLabelDone: {
+    color: '#16A34A',
+    fontWeight: '600',
+  },
+  stepConnector: {
+    flex: 1,
+    height: 2,
+    backgroundColor: '#E0D7CB',
+    marginHorizontal: 4,
+    marginBottom: 16,
+  },
+  stepConnectorActive: {
+    backgroundColor: '#16A34A',
   },
   scrollContent: {
     padding: spacing.screenPadding,
-    paddingBottom: spacing.xxxl,
+    paddingBottom: 40,
   },
-  stepTitle: {
-    ...typography.h3,
-    color: colors.primaryDark,
+  serviceHeroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginBottom: 14,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    gap: 12,
+  },
+  serviceHeroImg: {
+    width: 58,
+    height: 58,
+    borderRadius: 12,
+    backgroundColor: '#FAF5EE',
+  },
+  serviceHeroDetails: {
+    flex: 1,
+  },
+  heroBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  heroPriceText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#6B0E1E',
+  },
+  serviceHeroTitle: {
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#341118',
     fontFamily: typography.fontFamilySerif,
-    marginBottom: 4,
   },
-  stepSubtitle: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    marginBottom: spacing.md,
+  serviceHeroSub: {
+    fontSize: 11.5,
+    color: '#7A6E63',
+    marginTop: 1,
+  },
+  sectionHeader: {
+    marginBottom: 12,
+  },
+  stepHeading: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#6B0E1E',
+    fontFamily: typography.fontFamilySerif,
+    marginBottom: 3,
+  },
+  stepDescription: {
+    fontSize: 12.5,
+    color: '#7A6E63',
     lineHeight: 18,
   },
   modeContainer: {
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+    gap: 10,
+    marginBottom: 14,
   },
   modeCard: {
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
     borderWidth: 1.5,
-    borderColor: colors.cardBorder,
+    borderColor: '#EFE5D8',
+    gap: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
   },
   modeCardActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#FEF2F2',
+    borderColor: '#6B0E1E',
+    backgroundColor: '#FFFBF9',
   },
-  modeCardTitle: {
-    ...typography.bodyMedium,
+  modeIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FAF5EE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  modeTitle: {
+    fontSize: 14,
     fontWeight: '700',
-    color: colors.textPrimary,
-    marginTop: 4,
+    color: '#341118',
   },
-  modeCardTitleActive: {
-    color: colors.primaryDark,
+  modeTitleActive: {
+    color: '#6B0E1E',
   },
-  modeCardDesc: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 2,
+  modeDesc: {
+    fontSize: 12,
+    color: '#7A6E63',
+    lineHeight: 16.5,
   },
   formCard: {
-    padding: spacing.cardPadding,
-    marginBottom: spacing.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginBottom: 16,
   },
-  formLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
+  formCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  formCardTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#6B0E1E',
+  },
+  savedAddressesBox: {
+    marginBottom: 10,
+  },
+  savedAddressLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#8A7E73',
+  },
+  savedAddrChip: {
+    backgroundColor: '#FAF5EE',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: '#E8DFD5',
+  },
+  savedAddrChipActive: {
+    backgroundColor: '#6B0E1E',
+    borderColor: '#6B0E1E',
+  },
+  savedAddrText: {
+    fontSize: 11,
+    color: '#6B0E1E',
+    fontWeight: '600',
+  },
+  savedAddrTextActive: {
+    color: '#FFFFFF',
+  },
+  inputLabel: {
+    fontSize: 12,
+    color: '#55483D',
     fontWeight: '600',
     marginBottom: 4,
     marginTop: 6,
   },
   textInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF8F5',
     borderWidth: 1,
-    borderColor: colors.borderDefault,
-    borderRadius: borderRadius.sm,
+    borderColor: '#E8DFD5',
+    borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    ...typography.bodySmall,
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
+    paddingVertical: 9,
+    fontSize: 13,
+    color: '#2A1F1D',
+    marginBottom: 4,
   },
   rowInputs: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: 10,
   },
-  nextBtn: {
-    marginTop: spacing.md,
+  primaryBtn: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginTop: 12,
+    marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#6B0E1E',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
-  subHeading: {
-    ...typography.h4,
-    color: colors.primaryDark,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  dateStrip: {
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  dateChip: {
-    width: 64,
-    height: 74,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorder,
+  primaryBtnGradient: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    gap: 8,
+  },
+  primaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  subHeadingTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6B0E1E',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  dateStrip: {
+    gap: 8,
+    paddingVertical: 4,
+    marginBottom: 12,
+  },
+  dateChip: {
+    width: 66,
+    height: 76,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#EFE5D8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
   },
   dateChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#6B0E1E',
+    borderColor: '#6B0E1E',
   },
-  dateDayName: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
+  dateHindiDay: {
+    fontSize: 10,
+    color: '#8A7E73',
+    fontWeight: '600',
   },
   dateDayNum: {
-    ...typography.h3,
-    color: colors.primaryDark,
+    fontSize: 20,
     fontWeight: '800',
+    color: '#6B0E1E',
+    fontFamily: typography.fontFamilySerif,
+    marginVertical: 1,
   },
   dateMonth: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
+    fontSize: 10,
+    color: '#8A7E73',
+    fontWeight: '600',
   },
   dateTextActive: {
-    color: colors.white,
+    color: '#FFFFFF',
+  },
+  shubhDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#B45309',
+    marginTop: 2,
+  },
+  shubhDotActive: {
+    backgroundColor: '#FEF3C7',
   },
   slotsList: {
-    gap: spacing.xs,
-    marginBottom: spacing.md,
+    gap: 8,
+    marginBottom: 12,
   },
   slotCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 12,
     borderWidth: 1.5,
-    borderColor: colors.cardBorder,
+    borderColor: '#EFE5D8',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
   },
   slotCardActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#FEF2F2',
+    borderColor: '#6B0E1E',
+    backgroundColor: '#FFFBF9',
   },
   slotLeft: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  slotIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FAF5EE',
     alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'center',
+  },
+  slotIconCircleActive: {
+    backgroundColor: '#FDECE7',
+  },
+  slotTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
   },
   slotTitle: {
-    ...typography.bodySmall,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#341118',
   },
   slotTitleActive: {
-    color: colors.primaryDark,
+    color: '#6B0E1E',
   },
   slotTime: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
+    fontSize: 12,
+    color: '#B45309',
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  slotDesc: {
+    fontSize: 11,
+    color: '#7A6E63',
+    lineHeight: 15,
+  },
+  notesBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginBottom: 8,
   },
   panditCard: {
-    padding: spacing.cardPadding,
-    marginBottom: spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginBottom: 14,
   },
   panditRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    gap: 12,
+    marginBottom: 10,
   },
   panditAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#EAE6E1',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1.5,
+    borderColor: '#E8DFD5',
   },
   panditName: {
-    ...typography.bodyMedium,
+    fontSize: 14,
     fontWeight: '700',
-    color: colors.primaryDark,
-    marginTop: 2,
+    color: '#6B0E1E',
+    marginTop: 3,
   },
   panditShakha: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
+    fontSize: 11,
+    color: '#7A6E63',
   },
-  panditNote: {
-    ...typography.caption,
-    color: colors.textMuted,
+  panditNoteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFFBF5',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F3E4D1',
+  },
+  panditNoteText: {
+    fontSize: 11.5,
+    color: '#55483D',
+    flex: 1,
     lineHeight: 16,
   },
   samagriOptions: {
-    gap: spacing.xs,
-    marginBottom: spacing.md,
+    gap: 8,
+    marginBottom: 14,
   },
-  samagriOptionCard: {
+  samagriCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 12,
     borderWidth: 1.5,
-    borderColor: colors.cardBorder,
+    borderColor: '#EFE5D8',
+    gap: 10,
   },
-  samagriActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#FEF2F2',
+  samagriCardActive: {
+    borderColor: '#6B0E1E',
+    backgroundColor: '#FFFBF9',
+  },
+  samagriIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FAF5EE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  samagriTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
   },
   samagriTitle: {
-    ...typography.bodySmall,
+    fontSize: 13,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#341118',
   },
   samagriDesc: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
+    fontSize: 11,
+    color: '#7A6E63',
+    lineHeight: 15,
   },
   familyPickRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.white,
-    padding: spacing.sm,
-    borderRadius: borderRadius.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 10,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: '#EFE5D8',
     marginBottom: 6,
+    gap: 10,
   },
   familyPickActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#FEF2F2',
+    borderColor: '#6B0E1E',
+    backgroundColor: '#FFFBF9',
   },
   familyName: {
-    ...typography.bodySmall,
+    fontSize: 13,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#341118',
   },
   familyMeta: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
+    fontSize: 11,
+    color: '#7A6E63',
+    marginTop: 1,
+  },
+  emptyFamilyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FEF3C7',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
   },
   emptyFamilyNotice: {
-    ...typography.caption,
-    color: colors.textMuted,
-    lineHeight: 18,
+    fontSize: 12,
+    color: '#92400E',
+    flex: 1,
+    lineHeight: 16,
   },
   summaryCard: {
-    padding: spacing.cardPadding,
-    marginBottom: spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginBottom: 14,
+  },
+  summaryCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0E7DD',
+  },
+  summaryCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6B0E1E',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -808,45 +1556,55 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   summaryLabel: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
+    fontSize: 12.5,
+    color: '#8A7E73',
   },
   summaryValue: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#2A1F1D',
     maxWidth: '55%',
     textAlign: 'right',
   },
-  divider: {
+  summaryDivider: {
     height: 1,
-    backgroundColor: colors.cardBorder,
-    marginVertical: spacing.sm,
+    backgroundColor: '#F0E7DD',
+    marginVertical: 10,
+  },
+  summaryTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   summaryTotalLabel: {
-    ...typography.bodyMedium,
+    fontSize: 14,
     fontWeight: '700',
-    color: colors.primaryDark,
+    color: '#6B0E1E',
+  },
+  summaryTotalSub: {
+    fontSize: 11,
+    color: '#8A7E73',
   },
   summaryTotalVal: {
-    ...typography.h3,
+    fontSize: 22,
     fontWeight: '800',
-    color: colors.primary,
+    color: '#6B0E1E',
+    fontFamily: typography.fontFamilySerif,
   },
   paymentPlans: {
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
+    gap: 8,
+    marginBottom: 14,
   },
   planCard: {
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1.5,
-    borderColor: colors.cardBorder,
+    borderColor: '#EFE5D8',
   },
   planCardActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#FEF2F2',
+    borderColor: '#6B0E1E',
+    backgroundColor: '#FFFBF9',
   },
   planHeader: {
     flexDirection: 'row',
@@ -855,22 +1613,40 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   planTitle: {
-    ...typography.bodyMedium,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#341118',
   },
   planAmount: {
-    ...typography.h4,
-    color: colors.primary,
+    fontSize: 16,
     fontWeight: '800',
+    color: '#6B0E1E',
     marginBottom: 2,
   },
   planSub: {
-    ...typography.caption,
-    color: colors.textMuted,
+    fontSize: 11.5,
+    color: '#7A6E63',
     lineHeight: 16,
   },
-  confirmBtn: {
-    marginBottom: spacing.lg,
+  trustBanner: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E8DFD5',
+  },
+  trustItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  trustText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#341118',
   },
 });

@@ -9,19 +9,18 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
-import { Header } from '../../components/common/Header';
-import { Card } from '../../components/common/Card';
-import { Badge } from '../../components/common/Badge';
 import { Icon } from '../../components/common/Icon';
-import { Button } from '../../components/common/Button';
+import { CommonAppBackgroundScreen } from '../../components/common/CommonAppBackgroundScreen';
+import { LinearGradient } from '../../components/common/LinearGradient';
 import { useCartStore } from '../../store/useCartStore';
 import { resolveLocalizedText } from '../../utils/localization';
-import { getProductImageUrl } from '../../constants/images';
+import { localImages, getProductImageUrl } from '../../constants/images';
+
+const QUICK_COUPONS = ['VEDIC10', 'SHUBH10', 'FESTIVE20'];
 
 export const CartScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -52,13 +51,18 @@ export const CartScreen: React.FC = () => {
   const discount = getDiscountMinor() / 100;
   const grandTotal = getTotalMinor() / 100;
 
-  const handleApplyCoupon = () => {
-    if (!promoInput.trim()) return;
-    const success = applyCoupon(promoInput.trim());
+  const handleApplyCoupon = (codeToApply?: string) => {
+    const code = (codeToApply || promoInput).trim().toUpperCase();
+    if (!code) return;
+    const success = applyCoupon(code);
     if (success) {
-      setPromoMessage(`Shubh! Vedic coupon applied successfully.`);
+      setPromoInput(code);
+      setPromoMessage(`Shubh! Vedic coupon ${code} applied successfully.`);
     } else {
-      Alert.alert('Invalid Coupon', 'Try "VEDIC10", "SHUBH10", or "FESTIVE20" for savings.');
+      Alert.alert(
+        'Invalid Coupon',
+        'Try "VEDIC10", "SHUBH10", or "FESTIVE20" for divine savings.',
+      );
     }
   };
 
@@ -70,182 +74,374 @@ export const CartScreen: React.FC = () => {
     });
   };
 
+  const handleClearCart = () => {
+    Alert.alert(
+      'Clear Sacred Basket?',
+      'Are you sure you want to remove all items from your basket?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Clear', style: 'destructive', onPress: clearCart },
+      ],
+    );
+  };
+
+  // If cart is empty
   if (items.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <Header title="Sacred Basket" />
+      <CommonAppBackgroundScreen
+        safeAreaEdges={['top', 'left', 'right']}
+        resizeMode="stretch"
+      >
+        {/* Top Header Bar */}
+        <View style={styles.topHeader}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Icon family="material" name="arrow-back" size={24} color="#6B0E1E" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleWrap}>
+            <Text style={styles.headerTitle}>Sacred Basket</Text>
+            <Text style={styles.headerSubtitle}>0 Consecrated Dravyas</Text>
+          </View>
+        </View>
+
         <View style={styles.emptyContainer}>
-          <Icon
-            family="material-community"
-            name="shopping-outline"
-            size={56}
-            color={colors.textMuted}
-          />
+          {/* Central Medallion Badge */}
+          <View style={styles.emptyMedallionOuter}>
+            <View style={styles.emptyMedallionInner}>
+              <Icon
+                family="material-community"
+                name="shopping-outline"
+                size={44}
+                color="#6B0E1E"
+              />
+            </View>
+          </View>
+
           <Text style={styles.emptyTitle}>Your Sacred Basket is Empty</Text>
           <Text style={styles.emptySubtitle}>
-            Add consecrated samagri, A2 Vedic Ghee, brass lamps, or puja kits to proceed.
+            Add consecrated puja samagri, certified A2 Gir Cow Ghee, hand-cast brass lamps, or spiritual gift hampers to proceed.
           </Text>
-          <Button
-            title="Explore Consecrated Store"
-            variant="primary"
+
+          <Image
+            source={localImages.divider}
+            style={styles.sacredDivider}
+            resizeMode="contain"
+          />
+
+          <TouchableOpacity
+            activeOpacity={0.85}
             style={styles.exploreBtn}
             onPress={() => navigation.navigate('StoreHome')}
-            leftIcon={<Icon family="material-community" name="store" size={18} color="#FFFFFF" />}
-          />
+          >
+            <LinearGradient
+              colors={['#8B1528', '#5A0C1A']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.exploreBtnGradient}
+            >
+              <Icon
+                family="material-community"
+                name="store"
+                size={18}
+                color="#FFFFFF"
+              />
+              <Text style={styles.exploreBtnText}>Explore Consecrated Store</Text>
+              <Icon
+                family="material"
+                name="arrow-forward"
+                size={16}
+                color="#FFFFFF"
+              />
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </CommonAppBackgroundScreen>
     );
   }
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <Header
-        title="Sacred Basket"
-        rightAction={
-          <TouchableOpacity onPress={clearCart}>
-            <Text style={styles.clearText}>Clear</Text>
-          </TouchableOpacity>
-        }
-      />
+  const freeDeliveryThreshold = 499;
+  const isFreeDeliveryUnlocked = subtotal >= freeDeliveryThreshold;
+  const amountNeeded = Math.round(freeDeliveryThreshold - subtotal);
+  const progressRatio = Math.min(1, subtotal / freeDeliveryThreshold);
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Free Delivery Progress Bar */}
-        {subtotal < 499 ? (
-          <Card variant="warm" style={styles.deliveryProgressCard}>
-            <Text style={styles.deliveryProgressText}>
-              Add ₹{Math.round(499 - subtotal)} more for <Text style={{ fontWeight: '700' }}>Free Consecrated Delivery</Text>
-            </Text>
-          </Card>
-        ) : (
-          <Card variant="warm" style={styles.deliveryProgressCard}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Icon family="material-community" name="truck-check" size={18} color={colors.success} />
-              <Text style={[styles.deliveryProgressText, { color: colors.success }]}>
-                Free Express Delivery unlocked for this order!
+  return (
+    <CommonAppBackgroundScreen
+      safeAreaEdges={['top', 'left', 'right']}
+      resizeMode="stretch"
+    >
+      {/* Top Header Bar */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Icon family="material" name="arrow-back" size={24} color="#6B0E1E" />
+        </TouchableOpacity>
+
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerTitle}>Sacred Basket</Text>
+          <Text style={styles.headerSubtitle}>
+            {items.length} {items.length === 1 ? 'Item' : 'Items'} • Consecrated Dravyas
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={handleClearCart}
+          style={styles.clearBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Icon family="material" name="delete-sweep" size={20} color="#6B0E1E" />
+          <Text style={styles.clearText}>Clear</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Free Delivery Progress Banner */}
+        <View style={styles.deliveryProgressCard}>
+          <View style={styles.deliveryHeaderRow}>
+            <View style={styles.deliveryIconCircle}>
+              <Icon
+                family="material-community"
+                name={isFreeDeliveryUnlocked ? 'truck-check' : 'truck-fast'}
+                size={18}
+                color={isFreeDeliveryUnlocked ? '#16A34A' : '#B45309'}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              {isFreeDeliveryUnlocked ? (
+                <Text style={styles.deliveryUnlockedTitle}>
+                  Free Consecrated Delivery Unlocked!
+                </Text>
+              ) : (
+                <Text style={styles.deliveryLockedTitle}>
+                  Add ₹{amountNeeded} more for <Text style={{ fontWeight: '800' }}>Free Consecrated Delivery</Text>
+                </Text>
+              )}
+              <Text style={styles.deliverySub}>
+                {isFreeDeliveryUnlocked
+                  ? 'All items sanctified and packed in blessed tamper-proof boxes.'
+                  : 'Orders above ₹499 qualify for complimentary holy courier dispatch.'}
               </Text>
             </View>
-          </Card>
-        )}
+          </View>
+
+          {/* Progress Bar Track */}
+          <View style={styles.progressBarTrack}>
+            <View
+              style={[
+                styles.progressBarFill,
+                {
+                  width: `${Math.round(progressRatio * 100)}%`,
+                  backgroundColor: isFreeDeliveryUnlocked ? '#16A34A' : '#B45309',
+                },
+              ]}
+            />
+          </View>
+        </View>
+
+        {/* Section Heading */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionHeaderTitle}>Sacred Items ({items.length})</Text>
+          <Text style={styles.sectionHeaderSubtitle}>Blessed Dravyas</Text>
+        </View>
 
         {/* Itemized List */}
-        <Text style={styles.sectionHeader}>Sacred Items ({items.length})</Text>
         {items.map((cartItem) => {
           const itemTitle = resolveLocalizedText(
             cartItem.product.title,
-            'Consecrated Samagri'
+            'Consecrated Samagri',
           );
-          const itemImg = cartItem.product.imageUrl || getProductImageUrl(cartItem.product);
+          const itemImg =
+            cartItem.product.imageUrl || getProductImageUrl(cartItem.product);
           const itemPrice = (cartItem.unitPriceMinor * cartItem.quantity) / 100;
+          const unitPrice = cartItem.unitPriceMinor / 100;
 
           return (
-            <Card key={cartItem.id} style={styles.cartItemCard}>
+            <View key={cartItem.id} style={styles.cartItemCard}>
               <View style={styles.itemRow}>
-                <Image source={{ uri: itemImg }} style={styles.itemThumb} />
+                <Image
+                  source={{ uri: itemImg }}
+                  style={styles.itemThumb}
+                  resizeMode="cover"
+                />
+
                 <View style={styles.itemInfo}>
-                  <Text style={styles.itemTitle} numberOfLines={1}>
+                  <Text style={styles.itemTitle} numberOfLines={2}>
                     {itemTitle}
                   </Text>
-                  {cartItem.variantTitle && (
-                    <Text style={styles.variantBadge}>Size: {cartItem.variantTitle}</Text>
+                  {Boolean(cartItem.variantTitle) && (
+                    <View style={styles.variantChip}>
+                      <Text style={styles.variantBadgeText}>
+                        Size: {cartItem.variantTitle}
+                      </Text>
+                    </View>
                   )}
-                  <Text style={styles.itemPrice}>₹{itemPrice}</Text>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.itemPrice}>₹{itemPrice.toFixed(0)}</Text>
+                    {cartItem.quantity > 1 && (
+                      <Text style={styles.unitPriceText}>
+                        (₹{unitPrice.toFixed(0)} each)
+                      </Text>
+                    )}
+                  </View>
                 </View>
 
-                {/* Stepper + Delete */}
+                {/* Stepper + Delete Action */}
                 <View style={styles.itemActions}>
                   <TouchableOpacity
                     style={styles.deleteBtn}
                     onPress={() => removeItem(cartItem.id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Icon family="material" name="delete-outline" size={18} color={colors.danger} />
+                    <Icon
+                      family="material"
+                      name="delete-outline"
+                      size={18}
+                      color="#DC2626"
+                    />
                   </TouchableOpacity>
 
                   <View style={styles.stepper}>
                     <TouchableOpacity
                       style={styles.stepperBtn}
-                      onPress={() => updateQuantity(cartItem.id, cartItem.quantity - 1)}
+                      onPress={() =>
+                        updateQuantity(cartItem.id, cartItem.quantity - 1)
+                      }
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
-                      <Icon family="material" name="remove" size={14} color={colors.primary} />
+                      <Icon family="material" name="remove" size={14} color="#6B0E1E" />
                     </TouchableOpacity>
                     <Text style={styles.stepperQty}>{cartItem.quantity}</Text>
                     <TouchableOpacity
                       style={styles.stepperBtn}
-                      onPress={() => updateQuantity(cartItem.id, cartItem.quantity + 1)}
+                      onPress={() =>
+                        updateQuantity(cartItem.id, cartItem.quantity + 1)
+                      }
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
-                      <Icon family="material" name="add" size={14} color={colors.primary} />
+                      <Icon family="material" name="add" size={14} color="#6B0E1E" />
                     </TouchableOpacity>
                   </View>
                 </View>
               </View>
-            </Card>
+            </View>
           );
         })}
 
         {/* Sacred Gifting Toggle Card */}
-        <Card variant="warm" style={styles.giftCard}>
-          <TouchableOpacity style={styles.giftToggleRow} onPress={handleToggleGift}>
-            <View style={styles.giftLeft}>
-              <Icon family="material-community" name="gift-outline" size={22} color={colors.primary} />
-              <View>
-                <Text style={styles.giftTitle}>Consecrated Gift for Family / Temple</Text>
-                <Text style={styles.giftSubtitle}>
-                  Includes consecrated packing & personalized blessing note
-                </Text>
-              </View>
+        <View style={styles.giftCard}>
+          <TouchableOpacity
+            style={styles.giftToggleRow}
+            onPress={handleToggleGift}
+            activeOpacity={0.8}
+          >
+            <View style={styles.giftIconCircle}>
+              <Icon
+                family="material-community"
+                name="gift-outline"
+                size={20}
+                color="#6B0E1E"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.giftTitle}>
+                Consecrated Gift for Family / Temple
+              </Text>
+              <Text style={styles.giftSubtitle}>
+                Includes sacred kalava thread, Ganga Jal sprinkling, and customized blessing card
+              </Text>
             </View>
             <Icon
               family="material-community"
-              name={isGiftActive ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'}
-              size={24}
-              color={isGiftActive ? colors.primary : colors.textMuted}
+              name={
+                isGiftActive
+                  ? 'checkbox-marked-circle'
+                  : 'checkbox-blank-circle-outline'
+              }
+              size={22}
+              color={isGiftActive ? '#6B0E1E' : '#A3988C'}
             />
           </TouchableOpacity>
 
           {isGiftActive && (
             <View style={styles.giftInputBox}>
+              <Text style={styles.inputMiniLabel}>Personalized Blessing Message:</Text>
               <TextInput
                 style={styles.giftTextInput}
                 placeholder="Enter personal blessing note"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor="#A3988C"
                 value={giftNote}
                 onChangeText={(txt) => {
                   setGiftNote(txt);
                   items.forEach((item) => toggleSacredGift(item.id, true, txt));
                 }}
                 multiline
+                numberOfLines={2}
               />
             </View>
           )}
-        </Card>
+        </View>
 
-        {/* Promo Code Box */}
-        <Card style={styles.promoCard}>
-          <Text style={styles.promoTitle}>Vedic Coupon / Shubh Promo</Text>
+        {/* Vedic Coupon & Shubh Promo Box */}
+        <View style={styles.promoCard}>
+          <View style={styles.promoHeader}>
+            <Icon family="material" name="local-offer" size={16} color="#6B0E1E" />
+            <Text style={styles.promoTitle}>Vedic Coupon / Shubh Promo</Text>
+          </View>
+
           <View style={styles.promoRow}>
             <TextInput
               style={styles.promoInput}
               placeholder="Enter coupon code"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor="#A3988C"
               value={promoInput}
               onChangeText={setPromoInput}
               autoCapitalize="characters"
             />
-            <TouchableOpacity style={styles.applyBtn} onPress={handleApplyCoupon}>
+            <TouchableOpacity
+              style={styles.applyBtn}
+              onPress={() => handleApplyCoupon()}
+              activeOpacity={0.8}
+            >
               <Text style={styles.applyBtnText}>Apply</Text>
             </TouchableOpacity>
           </View>
-          {couponCode && (
+
+          {/* Quick Apply Coupons */}
+          <View style={styles.quickCouponsRow}>
+            <Text style={styles.quickCouponLabel}>Try:</Text>
+            {QUICK_COUPONS.map((code) => (
+              <TouchableOpacity
+                key={code}
+                onPress={() => handleApplyCoupon(code)}
+                style={styles.quickCouponChip}
+              >
+                <Text style={styles.quickCouponText}>{code}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {Boolean(couponCode) && (
             <View style={styles.appliedRow}>
-              <Icon family="material" name="check-circle" size={14} color={colors.success} />
+              <Icon family="material" name="check-circle" size={15} color="#16A34A" />
               <Text style={styles.appliedText}>
-                Coupon <Text style={{ fontWeight: '700' }}>{couponCode}</Text> active ({discountPercentage}% off)
+                Coupon <Text style={{ fontWeight: '800' }}>{couponCode}</Text> applied ({discountPercentage}% off)!
               </Text>
             </View>
           )}
-        </Card>
+        </View>
 
-        {/* Price Breakdown */}
-        <Card style={styles.breakdownCard}>
+        {/* Dakshina & Price Breakdown */}
+        <View style={styles.breakdownCard}>
           <Text style={styles.breakdownTitle}>Dakshina & Price Summary</Text>
 
           <View style={styles.breakdownRow}>
@@ -255,14 +451,16 @@ export const CartScreen: React.FC = () => {
 
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Vedic Consecration & Packing</Text>
-            <Text style={[styles.breakdownVal, { color: colors.success }]}>FREE (Shubh)</Text>
+            <Text style={[styles.breakdownVal, { color: '#16A34A' }]}>
+              FREE (Shubh)
+            </Text>
           </View>
 
           <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Delivery Charges</Text>
+            <Text style={styles.breakdownLabel}>Holy Delivery Charges</Text>
             <Text style={styles.breakdownVal}>
               {delivery === 0 ? (
-                <Text style={{ color: colors.success }}>FREE</Text>
+                <Text style={{ color: '#16A34A', fontWeight: '700' }}>FREE</Text>
               ) : (
                 `₹${delivery.toFixed(2)}`
               )}
@@ -271,10 +469,10 @@ export const CartScreen: React.FC = () => {
 
           {discount > 0 && (
             <View style={styles.breakdownRow}>
-              <Text style={[styles.breakdownLabel, { color: colors.success }]}>
+              <Text style={[styles.breakdownLabel, { color: '#16A34A' }]}>
                 Vedic Promo Discount
               </Text>
-              <Text style={[styles.breakdownVal, { color: colors.success }]}>
+              <Text style={[styles.breakdownVal, { color: '#16A34A', fontWeight: '700' }]}>
                 -₹{discount.toFixed(2)}
               </Text>
             </View>
@@ -283,108 +481,314 @@ export const CartScreen: React.FC = () => {
           <View style={styles.divider} />
 
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Payable</Text>
+            <View>
+              <Text style={styles.totalLabel}>Total Payable</Text>
+              <Text style={styles.totalSub}>Inclusive of all sacred taxes</Text>
+            </View>
             <Text style={styles.totalVal}>₹{grandTotal.toFixed(2)}</Text>
           </View>
-        </Card>
+        </View>
 
-        {/* Checkout Button */}
-        <Button
-          title={`Proceed to Sacred Checkout (₹${grandTotal.toFixed(2)})`}
-          variant="primary"
+        {/* Trust Badges Banner */}
+        <View style={styles.trustBanner}>
+          <View style={styles.trustItem}>
+            <Icon family="material" name="verified" size={15} color="#16A34A" />
+            <Text style={styles.trustText}>100% Pure Dravyas</Text>
+          </View>
+          <View style={styles.trustItem}>
+            <Icon family="material" name="spa" size={15} color="#16A34A" />
+            <Text style={styles.trustText}>Temple Sanctified</Text>
+          </View>
+          <View style={styles.trustItem}>
+            <Icon family="material" name="lock" size={15} color="#16A34A" />
+            <Text style={styles.trustText}>Secure Checkout</Text>
+          </View>
+        </View>
+
+        {/* Proceed to Checkout Action Button */}
+        <TouchableOpacity
+          activeOpacity={0.85}
           style={styles.checkoutBtn}
           onPress={() => navigation.navigate('StoreCheckout')}
-          rightIcon={<Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />}
-        />
+        >
+          <LinearGradient
+            colors={['#8B1528', '#5A0C1A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.checkoutBtnGradient}
+          >
+            <Text style={styles.checkoutBtnText}>
+              Proceed to Sacred Checkout (₹{grandTotal.toFixed(0)})
+            </Text>
+            <Icon family="material" name="arrow-forward" size={18} color="#FFFFFF" />
+          </LinearGradient>
+        </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </CommonAppBackgroundScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  topHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  backBtn: {
+    padding: 6,
+    marginRight: 6,
+  },
+  headerTitleWrap: {
     flex: 1,
-    backgroundColor: colors.bgSand,
+  },
+  headerTitle: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#6B0E1E',
+    fontFamily: typography.fontFamilySerif,
+  },
+  headerSubtitle: {
+    fontSize: 11.5,
+    color: '#7A6E63',
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  clearBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    backgroundColor: '#FDECE7',
   },
   clearText: {
-    ...typography.caption,
-    color: colors.primary,
+    fontSize: 12,
+    color: '#6B0E1E',
     fontWeight: '700',
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: 8,
+    paddingBottom: 40,
   },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.xl,
-    gap: spacing.sm,
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  emptyMedallionOuter: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1.5,
+    borderColor: '#ECC77B',
+    backgroundColor: 'rgba(255, 248, 235, 0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 16,
+  },
+  emptyMedallionInner: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    borderWidth: 1.5,
+    borderColor: '#DFBF7C',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 22,
+    fontFamily: typography.fontFamilySerif,
+    fontWeight: '700',
+    color: '#6B0E1E',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   emptySubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: '#7A6E63',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 19,
+    paddingHorizontal: 16,
+    marginBottom: 14,
+  },
+  sacredDivider: {
+    width: 140,
+    height: 18,
+    alignSelf: 'center',
+    marginVertical: 12,
+    opacity: 0.85,
   },
   exploreBtn: {
-    marginTop: spacing.md,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginTop: 8,
+    elevation: 3,
+    shadowColor: '#6B0E1E',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
-  scrollContent: {
-    padding: spacing.screenPadding,
-    paddingBottom: spacing.xxxl,
+  exploreBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+    borderRadius: 24,
+    gap: 8,
+  },
+  exploreBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   deliveryProgressCard: {
-    marginBottom: spacing.md,
-    padding: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginBottom: 14,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+  },
+  deliveryHeaderRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
   },
-  deliveryProgressText: {
-    ...typography.caption,
-    color: colors.primaryDark,
+  deliveryIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FAF5EE',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sectionHeader: {
-    ...typography.h4,
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
+  deliveryUnlockedTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#16A34A',
+  },
+  deliveryLockedTitle: {
+    fontSize: 13,
+    color: '#341118',
+    fontWeight: '600',
+  },
+  deliverySub: {
+    fontSize: 11,
+    color: '#7A6E63',
+    marginTop: 1,
+  },
+  progressBarTrack: {
+    height: 6,
+    backgroundColor: '#F3EDE4',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#341118',
+    fontFamily: typography.fontFamilySerif,
+  },
+  sectionHeaderSubtitle: {
+    fontSize: 11.5,
+    color: '#B45309',
+    fontWeight: '600',
   },
   cartItemCard: {
-    marginBottom: spacing.sm,
-    padding: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 12,
   },
   itemThumb: {
-    width: 60,
-    height: 60,
-    borderRadius: borderRadius.md,
+    width: 68,
+    height: 68,
+    borderRadius: 12,
+    backgroundColor: '#FAF5EE',
   },
   itemInfo: {
     flex: 1,
   },
   itemTitle: {
-    ...typography.bodyMedium,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#2A1F1D',
+    lineHeight: 18,
   },
-  variantBadge: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
-    marginTop: 2,
+  variantChip: {
+    backgroundColor: '#FAF5EE',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginTop: 3,
+  },
+  variantBadgeText: {
+    fontSize: 10.5,
+    color: '#7A6E63',
+    fontWeight: '600',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
   },
   itemPrice: {
-    ...typography.bodyMedium,
-    color: colors.primary,
-    fontWeight: '700',
-    marginTop: 4,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#6B0E1E',
+  },
+  unitPriceText: {
+    fontSize: 11,
+    color: '#8A7E73',
   },
   itemActions: {
     alignItems: 'flex-end',
-    gap: spacing.xs,
+    justifyContent: 'space-between',
+    height: 64,
   },
   deleteBtn: {
     padding: 4,
@@ -392,150 +796,261 @@ const styles = StyleSheet.create({
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bgCream,
-    borderRadius: borderRadius.sm,
+    backgroundColor: '#FAF5EE',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.borderWarm,
+    borderColor: '#E8DFD5',
   },
   stepperBtn: {
-    padding: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   stepperQty: {
-    ...typography.caption,
-    fontWeight: '700',
-    color: colors.primary,
-    paddingHorizontal: 8,
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#6B0E1E',
+    paddingHorizontal: 4,
   },
   giftCard: {
-    marginVertical: spacing.sm,
-    padding: spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginVertical: 6,
   },
   giftToggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
   },
-  giftLeft: {
-    flexDirection: 'row',
+  giftIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FDECE7',
     alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
+    justifyContent: 'center',
   },
   giftTitle: {
-    ...typography.bodySmall,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#341118',
   },
   giftSubtitle: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
-    marginTop: 2,
+    fontSize: 11,
+    color: '#7A6E63',
+    marginTop: 1,
+    lineHeight: 15,
   },
   giftInputBox: {
-    marginTop: spacing.sm,
-    paddingTop: spacing.xs,
+    marginTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: colors.borderWarm,
+    borderTopColor: '#F0E7DD',
+  },
+  inputMiniLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6B0E1E',
+    marginBottom: 4,
   },
   giftTextInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF8F5',
     borderWidth: 1,
-    borderColor: colors.borderWarm,
-    borderRadius: borderRadius.sm,
-    padding: spacing.sm,
-    ...typography.bodySmall,
-    color: colors.textPrimary,
-    minHeight: 50,
+    borderColor: '#E8DFD5',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: '#2A1F1D',
+    minHeight: 52,
+    textAlignVertical: 'top',
   },
   promoCard: {
-    marginBottom: spacing.md,
-    padding: spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginVertical: 6,
+  },
+  promoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
   },
   promoTitle: {
-    ...typography.bodySmall,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
+    color: '#341118',
   },
   promoRow: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: 8,
   },
   promoInput: {
     flex: 1,
-    height: 40,
+    height: 42,
+    backgroundColor: '#FAF8F5',
     borderWidth: 1,
-    borderColor: colors.borderWarm,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.sm,
-    ...typography.bodySmall,
-    color: colors.textPrimary,
+    borderColor: '#E8DFD5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    fontSize: 13,
+    color: '#2A1F1D',
   },
   applyBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
+    backgroundColor: '#6B0E1E',
+    paddingHorizontal: 18,
     justifyContent: 'center',
-    borderRadius: borderRadius.sm,
+    borderRadius: 12,
   },
   applyBtnText: {
-    ...typography.caption,
     color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '700',
+  },
+  quickCouponsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  quickCouponLabel: {
+    fontSize: 11,
+    color: '#8A7E73',
+    fontWeight: '600',
+  },
+  quickCouponChip: {
+    backgroundColor: '#FAF5EE',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E8DFD5',
+  },
+  quickCouponText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#6B0E1E',
   },
   appliedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: spacing.xs,
+    gap: 5,
+    marginTop: 10,
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   appliedText: {
-    ...typography.captionSmall,
-    color: colors.success,
+    fontSize: 11.5,
+    color: '#16A34A',
+    fontWeight: '600',
   },
   breakdownCard: {
-    marginBottom: spacing.lg,
-    padding: spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginVertical: 8,
   },
   breakdownTitle: {
-    ...typography.h4,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#6B0E1E',
+    fontFamily: typography.fontFamilySerif,
+    marginBottom: 10,
   },
   breakdownRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginVertical: 4,
   },
   breakdownLabel: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
+    fontSize: 12.5,
+    color: '#8A7E73',
   },
   breakdownVal: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#2A1F1D',
   },
   divider: {
     height: 1,
-    backgroundColor: colors.borderWarm,
-    marginVertical: spacing.xs,
+    backgroundColor: '#F0E7DD',
+    marginVertical: 10,
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
   },
   totalLabel: {
-    ...typography.h4,
-    color: colors.textPrimary,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#6B0E1E',
+  },
+  totalSub: {
+    fontSize: 10.5,
+    color: '#8A7E73',
+    marginTop: 1,
   },
   totalVal: {
-    ...typography.h3,
-    color: colors.primary,
+    fontSize: 22,
     fontWeight: '800',
+    color: '#6B0E1E',
+    fontFamily: typography.fontFamilySerif,
+  },
+  trustBanner: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E8DFD5',
+  },
+  trustItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  trustText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#341118',
   },
   checkoutBtn: {
-    marginBottom: spacing.xl,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginTop: 10,
+    marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#6B0E1E',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  checkoutBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    gap: 8,
+  },
+  checkoutBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });
