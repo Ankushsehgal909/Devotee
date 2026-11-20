@@ -15,6 +15,7 @@ import { colors } from '../../theme/colors';
 import { Icon } from '../../components/common/Icon';
 import { ProductCardSkeleton } from '../../components/common/Skeleton';
 import { useCatalog } from '../../api/shop';
+import { SacredShimmer } from '../../components/common/SacredShimmer';
 import { Product } from '../../types';
 import { useCartStore } from '../../store/useCartStore';
 import { resolveLocalizedText } from '../../utils/localization';
@@ -125,21 +126,25 @@ export const BestSellerScreen: React.FC = () => {
             resizeMode="cover"
           />
 
-          {/* Top-Left Rank or Bestseller Badge */}
-          <View
+          {/* Top-Left Rank or Bestseller Badge with Gold Shimmer */}
+          <SacredShimmer
             style={[
               styles.productBadge,
               index < 3 ? styles.badgeTopRank : styles.badgeNormal,
             ]}
+            borderRadius={10}
+            duration={index === 0 ? 1800 : 2500}
           >
-            <Icon
-              family="material-community"
-              name={index < 3 ? 'crown' : 'fire'}
-              size={11}
-              color="#FFFFFF"
-            />
-            <Text style={styles.productBadgeText}>{rankLabel}</Text>
-          </View>
+            <View style={styles.badgeInnerRow}>
+              <Icon
+                family="material-community"
+                name={index < 3 ? 'crown' : 'fire'}
+                size={11}
+                color="#FFFFFF"
+              />
+              <Text style={styles.productBadgeText}>{rankLabel}</Text>
+            </View>
+          </SacredShimmer>
 
           {/* Top-Right Wishlist Heart Button */}
           <TouchableOpacity
@@ -851,6 +856,11 @@ const styles = StyleSheet.create({
   },
   badgeNormal: {
     backgroundColor: '#B54708',
+  },
+  badgeInnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
   productBadgeText: {
     fontSize: 9.5,

@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   Image,
   TextInput,
@@ -268,10 +269,21 @@ const FILTER_TABS = [
   { id: 'purnima', label: 'Purnima & Holy Days', icon: 'brightness-7' },
 ];
 
+const PANCHANG_DAYS_STRIP = [
+  { day: '20', dayName: 'Fri', tithi: 'Dashami', isVrat: false },
+  { day: '21', dayName: 'Sat', tithi: 'Ekadashi', isVrat: true, isToday: true },
+  { day: '22', dayName: 'Sun', tithi: 'Dwadashi', isVrat: false },
+  { day: '23', dayName: 'Mon', tithi: 'Pradosh', isVrat: true },
+  { day: '24', dayName: 'Tue', tithi: 'Chaturdashi', isVrat: false },
+  { day: '25', dayName: 'Wed', tithi: 'Purnima', isVrat: true },
+  { day: '26', dayName: 'Thu', tithi: 'Pratipada', isVrat: false },
+];
+
 export const FestivalCalendarScreen: React.FC = () => {
   const navigation = useNavigation<any>();
 
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [selectedDay, setSelectedDay] = useState<string>('21');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [reminders, setReminders] = useState<Record<string, boolean>>({});
@@ -583,6 +595,82 @@ export const FestivalCalendarScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={styles.headerComponent}>
+            {/* Interactive Panchang Day Strip (Inspired by reactnativecomponents.com Agenda Calendar) */}
+            <View style={styles.dateStripWrap}>
+              <View style={styles.dateStripHeader}>
+                <View style={styles.dateStripTitleRow}>
+                  <Icon
+                    family="material-community"
+                    name="calendar-month-outline"
+                    size={15}
+                    color="#6B0E1E"
+                  />
+                  <Text style={styles.dateStripMonthTitle}>
+                    Kartika Masa • Shukla Paksha
+                  </Text>
+                </View>
+                <View style={styles.vratLegend}>
+                  <View style={styles.vratDot} />
+                  <Text style={styles.vratLegendText}>Vrat / Fasting</Text>
+                </View>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.dateStripScroll}
+              >
+                {PANCHANG_DAYS_STRIP.map((item) => {
+                  const isSelected = selectedDay === item.day;
+                  return (
+                    <TouchableOpacity
+                      key={item.day}
+                      style={[
+                        styles.dayCard,
+                        isSelected && styles.dayCardActive,
+                      ]}
+                      onPress={() => setSelectedDay(item.day)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.dayNameText,
+                          isSelected && styles.dayNameTextActive,
+                        ]}
+                      >
+                        {item.dayName}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.dayNumText,
+                          isSelected && styles.dayNumTextActive,
+                        ]}
+                      >
+                        {item.day}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.dayTithiText,
+                          isSelected && styles.dayTithiTextActive,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item.tithi}
+                      </Text>
+                      {item.isVrat && (
+                        <View
+                          style={[
+                            styles.dayVratIndicator,
+                            isSelected && styles.dayVratIndicatorActive,
+                          ]}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
             {/* Today's Vedic Panchang Widget */}
             <View style={styles.panchangCard}>
               <View style={styles.panchangHeaderRow}>
@@ -819,6 +907,110 @@ const styles = StyleSheet.create({
   headerComponent: {
     marginTop: 4,
     marginBottom: 8,
+  },
+  dateStripWrap: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#6B0E1E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+  },
+  dateStripHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    marginBottom: 10,
+  },
+  dateStripTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dateStripMonthTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#6B0E1E',
+    letterSpacing: 0.3,
+  },
+  vratLegend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  vratDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#D97706',
+  },
+  vratLegendText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#8A5812',
+  },
+  dateStripScroll: {
+    paddingHorizontal: 10,
+    gap: 8,
+  },
+  dayCard: {
+    width: 54,
+    paddingVertical: 8,
+    borderRadius: 14,
+    alignItems: 'center',
+    backgroundColor: '#FAF7F2',
+    borderWidth: 1,
+    borderColor: '#EFE5D8',
+    position: 'relative',
+  },
+  dayCardActive: {
+    backgroundColor: '#7E1528',
+    borderColor: '#570E1B',
+  },
+  dayNameText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#8A7669',
+    textTransform: 'uppercase',
+  },
+  dayNameTextActive: {
+    color: '#FFEDB3',
+    fontWeight: '700',
+  },
+  dayNumText: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#241D1A',
+    marginVertical: 2,
+  },
+  dayNumTextActive: {
+    color: '#FFFFFF',
+  },
+  dayTithiText: {
+    fontSize: 9.5,
+    fontWeight: '600',
+    color: '#6B584B',
+  },
+  dayTithiTextActive: {
+    color: '#FDE68A',
+  },
+  dayVratIndicator: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#D97706',
+  },
+  dayVratIndicatorActive: {
+    backgroundColor: '#FFEDB3',
   },
   panchangCard: {
     backgroundColor: '#FFFFFF',

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,18 +6,18 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { CommonAppBackgroundScreen } from '../../components/common/CommonAppBackgroundScreen';
 import { colors } from '../../theme/colors';
-import { spacing, borderRadius } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
-import { Card } from '../../components/common/Card';
-import { Header } from '../../components/common/Header';
 import { Icon } from '../../components/common/Icon';
 import { useMalaStore } from '../../store/useMalaStore';
 import { DEFAULT_MANTRAS } from '../../constants/vedic';
+import { SacredAura } from '../../components/common/SacredAura';
 
 export const JapamMalaScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const {
     currentMantraId,
     beadCount,
@@ -32,6 +32,9 @@ export const JapamMalaScreen: React.FC = () => {
     loadStoredMala,
   } = useMalaStore();
 
+  const tapScaleAnim = useRef(new Animated.Value(1)).current;
+  const rippleAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     loadStoredMala();
   }, []);
@@ -40,33 +43,82 @@ export const JapamMalaScreen: React.FC = () => {
     DEFAULT_MANTRAS.find((m) => m.id === currentMantraId) || DEFAULT_MANTRAS[0];
 
   const handleBeadTap = () => {
+    // Spring physics on bead tap
+    Animated.sequence([
+      Animated.timing(tapScaleAnim, {
+        toValue: 0.94,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.spring(tapScaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Pulse ripple
+    rippleAnim.setValue(0);
+    Animated.timing(rippleAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+
     const res = incrementBead();
     if (res.isMalaCompleted) {
       Alert.alert(
-        'Mala Complete',
-        `You have completed Round ${res.round} (108 Chants). May the Divine bless you.`
+        '॥ माला पूर्णम् ॥',
+        `Purna Sankalp! You have consecrated Round ${res.round} (108 Chants) of ${activeMantra.name}. May the Divine bless your family with peace and spiritual radiance.`
       );
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <Header
-        title="Japam Mala (108 Beads)"
-        showBack={false}
-        rightAction={
-          <TouchableOpacity onPress={toggleSound} style={styles.iconBtn}>
-            <Icon
-              family="material-community"
-              name={soundEnabled ? 'volume-high' : 'volume-off'}
-              size={22}
-              color={soundEnabled ? colors.textPrimary : colors.textMuted}
-            />
-          </TouchableOpacity>
-        }
-      />
+  const progressPercent = Math.min(Math.round((beadCount / 108) * 100), 100);
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+  return (
+    <CommonAppBackgroundScreen
+      safeAreaEdges={['top', 'left', 'right']}
+      resizeMode="stretch"
+    >
+      {/* Top Header Bar */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Icon family="material" name="arrow-back" size={22} color="#6B0E1E" />
+        </TouchableOpacity>
+
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerTitle}>Japam Mala</Text>
+          <Text style={styles.headerSubtitle}>
+            108 Sacred Beads Chanting Counter
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={toggleSound}
+          style={styles.soundBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          activeOpacity={0.75}
+        >
+          <Icon
+            family="material-community"
+            name={soundEnabled ? 'volume-high' : 'volume-off'}
+            size={22}
+            color={soundEnabled ? '#6B0E1E' : '#9E8E81'}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Mantra Selector Carousel Pills */}
         <ScrollView
           horizontal
@@ -81,6 +133,7 @@ export const JapamMalaScreen: React.FC = () => {
                 styles.mantraChip,
                 m.id === currentMantraId && styles.mantraChipActive,
               ]}
+              activeOpacity={0.8}
             >
               <Text
                 style={[
@@ -95,203 +148,366 @@ export const JapamMalaScreen: React.FC = () => {
         </ScrollView>
 
         {/* Sacred Sanskrit Mantra Card */}
-        <Card variant="warm" style={styles.mantraCard}>
+        <View style={styles.mantraCard}>
           <View style={styles.deityRow}>
-            <Icon family="material-community" name="star-four-points" size={16} color={colors.goldAccent} />
+            <Icon
+              family="material-community"
+              name="star-four-points"
+              size={14}
+              color="#B3802B"
+            />
             <Text style={styles.deityName}>{activeMantra.deity}</Text>
           </View>
           <Text style={styles.sanskritText}>{activeMantra.sanskrit}</Text>
-          <Text style={styles.meaningText}>{activeMantra.meaning}</Text>
-        </Card>
+          <Text style={styles.meaningText}>"{activeMantra.meaning}"</Text>
+        </View>
 
-        {/* Central 108 Beads Interactive Chanting Ring */}
+        {/* Central 108 Beads Interactive Chanting Disc */}
         <View style={styles.beadCircleContainer}>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={handleBeadTap}
-            style={styles.sacredCircleButton}
-          >
-            <View style={styles.innerBeadGlow}>
-              <Text style={styles.beadNumber}>{beadCount}</Text>
-              <Text style={styles.beadMaxText}>/ 108 BEADS</Text>
-              <Text style={styles.tapInstruction}>Tap anywhere to chant</Text>
-            </View>
-          </TouchableOpacity>
+          <SacredAura size={260} auraColor="rgba(217, 119, 6, 0.16)">
+            <Animated.View
+              style={{
+                transform: [{ scale: tapScaleAnim }],
+              }}
+            >
+              <TouchableOpacity
+                activeOpacity={0.92}
+                onPress={handleBeadTap}
+                style={styles.sacredCircleButton}
+              >
+                {/* Outer Ring with Golden Accents */}
+                <View style={styles.outerRing}>
+                  <View style={styles.innerBeadGlow}>
+                    {/* Top Om Emblem */}
+                    <Icon
+                      family="material-community"
+                      name="om"
+                      size={28}
+                      color="#FFEDB3"
+                    />
+
+                    {/* Live Counter Number */}
+                    <Text style={styles.beadNumber}>{beadCount}</Text>
+
+                    {/* Progress Bar & Subtext */}
+                    <Text style={styles.beadMaxText}>/ 108 BEADS</Text>
+
+                    <View style={styles.progressTrack}>
+                      <View
+                        style={[
+                          styles.progressBar,
+                          { width: `${progressPercent}%` },
+                        ]}
+                      />
+                    </View>
+
+                    <Text style={styles.tapInstruction}>
+                      Touch anywhere to chant
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          </SacredAura>
         </View>
 
         {/* Chanting Stats Strip */}
         <View style={styles.statsRow}>
-          <Card style={styles.statCard}>
+          <View style={styles.statCard}>
+            <View style={styles.statIconRow}>
+              <Icon
+                family="material-community"
+                name="progress-clock"
+                size={16}
+                color="#6B0E1E"
+              />
+              <Text style={styles.statLabel}>Current Round</Text>
+            </View>
             <Text style={styles.statVal}>{currentRound}</Text>
-            <Text style={styles.statLabel}>Current Round</Text>
-            <Text style={styles.statTarget}>Target: {targetRounds}</Text>
-          </Card>
+            <Text style={styles.statTarget}>Target: {targetRounds} Malas</Text>
+          </View>
 
-          <Card style={styles.statCard}>
+          <View style={styles.statCard}>
+            <View style={styles.statIconRow}>
+              <Icon
+                family="material-community"
+                name="star-circle"
+                size={16}
+                color="#B3802B"
+              />
+              <Text style={styles.statLabel}>Lifetime Chants</Text>
+            </View>
             <Text style={styles.statVal}>{totalChantsLifetime}</Text>
-            <Text style={styles.statLabel}>Lifetime Chants</Text>
             <Text style={styles.statTarget}>Punya Sanchaya</Text>
-          </Card>
+          </View>
         </View>
 
         {/* Reset Current Round Button */}
-        <TouchableOpacity onPress={resetCurrentRound} style={styles.resetBtn}>
-          <Icon family="material-community" name="refresh" size={16} color={colors.textMuted} />
+        <TouchableOpacity
+          onPress={resetCurrentRound}
+          style={styles.resetBtn}
+          activeOpacity={0.7}
+        >
+          <Icon
+            family="material-community"
+            name="refresh"
+            size={16}
+            color="#8A7669"
+          />
           <Text style={styles.resetText}>Reset Current Mala</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </CommonAppBackgroundScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bgSand,
+  topHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2E4D5',
   },
-  iconBtn: {
-    padding: spacing.xs,
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FBF4EC',
+    borderWidth: 1,
+    borderColor: '#EBD8C3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitleWrap: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#6B0E1E',
+    letterSpacing: 0.3,
+  },
+  headerSubtitle: {
+    fontSize: 11,
+    color: '#8A5843',
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  soundBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FBF4EC',
+    borderWidth: 1,
+    borderColor: '#EBD8C3',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
-    padding: spacing.screenPadding,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     alignItems: 'center',
-    paddingBottom: spacing.xxxl,
+    paddingBottom: 40,
   },
   mantraPillsRow: {
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
+    gap: 8,
+    paddingVertical: 6,
   },
   mantraChip: {
-    paddingVertical: 6,
+    paddingVertical: 7,
     paddingHorizontal: 14,
-    borderRadius: borderRadius.full,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.borderWarm,
+    borderColor: '#ECD4BC',
     backgroundColor: '#FFFFFF',
   },
   mantraChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryDark,
+    backgroundColor: '#7E1528',
+    borderColor: '#570E1B',
   },
   mantraChipText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 12,
+    color: '#6A564A',
     fontWeight: '600',
   },
   mantraChipTextActive: {
     color: '#FFFFFF',
+    fontWeight: '700',
   },
   mantraCard: {
     width: '100%',
-    marginVertical: spacing.md,
+    backgroundColor: '#FFFBF2',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#F0DCB8',
+    marginVertical: 12,
     alignItems: 'center',
-    padding: spacing.lg,
+    padding: 16,
+    shadowColor: '#6B0E1E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   deityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: spacing.xs,
+    gap: 5,
+    marginBottom: 6,
   },
   deityName: {
-    ...typography.caption,
-    color: colors.goldAccent,
-    fontWeight: '700',
+    fontSize: 11,
+    color: '#B3802B',
+    fontWeight: '800',
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   sanskritText: {
-    ...typography.mantraText,
-    color: colors.primaryDark,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#570E1B',
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    lineHeight: 25,
+    marginBottom: 6,
   },
   meaningText: {
-    ...typography.caption,
-    color: colors.textMuted,
+    fontSize: 11.5,
+    color: '#7A675B',
     textAlign: 'center',
     fontStyle: 'italic',
+    lineHeight: 16.5,
   },
   beadCircleContainer: {
-    marginVertical: spacing.xl,
+    marginVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sacredCircleButton: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: colors.primary,
-    borderWidth: 6,
-    borderColor: colors.goldAccent,
+    width: 228,
+    height: 228,
+    borderRadius: 114,
+    backgroundColor: '#7E1528',
+    borderWidth: 5,
+    borderColor: '#E5C378',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primaryDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: '#6B0E1E',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    elevation: 10,
+  },
+  outerRing: {
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 235, 175, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   innerBeadGlow: {
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.3)',
+    width: 194,
+    height: 194,
+    borderRadius: 97,
+    backgroundColor: '#680E1C',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 8,
   },
   beadNumber: {
-    fontSize: 54,
+    fontSize: 52,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 2,
+    marginTop: 2,
   },
   beadMaxText: {
-    ...typography.caption,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
     color: '#FDE68A',
     letterSpacing: 1.5,
+    marginBottom: 8,
+  },
+  progressTrack: {
+    width: 120,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#E5C378',
+    borderRadius: 2,
   },
   tapInstruction: {
-    ...typography.captionSmall,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 8,
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: 12,
     width: '100%',
-    marginTop: spacing.md,
+    marginTop: 10,
   },
   statCard: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F2E4D5',
     alignItems: 'center',
-    padding: spacing.md,
+    padding: 12,
+    shadowColor: '#5C1D24',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  statVal: {
-    ...typography.h2,
-    color: colors.primary,
+  statIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
   },
   statLabel: {
-    ...typography.caption,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6A564A',
+  },
+  statVal: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#7E1528',
+    marginVertical: 2,
   },
   statTarget: {
-    ...typography.captionSmall,
-    color: colors.textMuted,
-    marginTop: 2,
+    fontSize: 10,
+    color: '#8A7669',
   },
   resetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: spacing.xl,
-    padding: spacing.sm,
+    gap: 5,
+    marginTop: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#F5ECE3',
   },
   resetText: {
-    ...typography.caption,
-    color: colors.textMuted,
+    fontSize: 11.5,
+    color: '#6A564A',
+    fontWeight: '600',
   },
 });

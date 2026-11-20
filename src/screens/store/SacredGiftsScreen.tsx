@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { CommonAppBackgroundScreen } from '../../components/common/CommonAppBackgroundScreen';
 import { colors } from '../../theme/colors';
 import { Icon } from '../../components/common/Icon';
+import { SacredShimmer } from '../../components/common/SacredShimmer';
 import { siteImages } from '../../constants/images';
 import { useCartStore } from '../../store/useCartStore';
 
@@ -542,16 +543,23 @@ export const SacredGiftsScreen: React.FC = () => {
                   <Text style={styles.hamperTagText}>{hamper.tag}</Text>
                 </View>
 
-                {/* Consecration Seal */}
-                <View style={styles.consecrationSeal}>
-                  <Icon
-                    family="material-community"
-                    name="certificate-outline"
-                    size={11}
-                    color="#B3802B"
-                  />
-                  <Text style={styles.consecrationSealText}>Mantra Certified</Text>
-                </View>
+                {/* Consecration Seal with Gold Shimmer */}
+                <SacredShimmer
+                  style={styles.consecrationSeal}
+                  borderRadius={12}
+                  shimmerColor="rgba(217, 119, 6, 0.25)"
+                  duration={2000}
+                >
+                  <View style={styles.sealInnerRow}>
+                    <Icon
+                      family="material-community"
+                      name="certificate-outline"
+                      size={11}
+                      color="#B3802B"
+                    />
+                    <Text style={styles.consecrationSealText}>Mantra Certified</Text>
+                  </View>
+                </SacredShimmer>
               </View>
 
               {/* Hamper Details Body */}
@@ -1238,6 +1246,11 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '800',
     color: '#8A5812',
+  },
+  sealInnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   hamperBody: {
     padding: 14,
